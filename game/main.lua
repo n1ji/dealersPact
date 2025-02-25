@@ -2,8 +2,8 @@
 
 function love.load()
     -- Screen dimensions
-    screenWidth = 800
-    screenHeight = 600
+    screenWidth = 1200
+    screenHeight = 700
     love.window.setMode(screenWidth, screenHeight, {resizable=false})
     love.window.setTitle("Poker-Inspired Game - Main Menu")
 
@@ -14,8 +14,8 @@ function love.load()
     hoverColor = {0.6, 0.6, 0.6, 1}
 
     -- Fonts
-    titleFont = love.graphics.newFont(74)
-    buttonFont = love.graphics.newFont(50)
+    titleFont = love.graphics.newFont("ZCOOLKuaiLe-Regular.ttf", 74)
+    buttonFont = love.graphics.newFont("ZCOOLKuaiLe-Regular.ttf", 50)
 
     -- Main menu text
     titleText = "Poker Game"
@@ -26,27 +26,33 @@ function love.load()
     buttons = {
         {
             text = "Play",
-            x = screenWidth / 2 - 100,
+            x = screenWidth / 2 - 150,
             y = 200,
-            width = 200,
-            height = 50,
-            action = "play"
+            width = 300,
+            height = 70,
+            action = "play",
+            cornerRadius = 20, -- Rounded corners
+            padding = 40 -- Padding around text
         },
         {
             text = "Settings",
-            x = screenWidth / 2 - 100,
+            x = screenWidth / 2 - 150,
             y = 300,
-            width = 200,
-            height = 50,
-            action = "settings"
+            width = 300,
+            height = 70,
+            action = "settings",
+            cornerRadius = 20,
+            padding = 40
         },
         {
             text = "Quit",
-            x = screenWidth / 2 - 100,
+            x = screenWidth / 2 - 150,
             y = 400,
-            width = 200,
-            height = 50,
-            action = "quit"
+            width = 300,
+            height = 70,
+            action = "quit",
+            cornerRadius = 20,
+            padding = 40
         }
     }
 end
@@ -65,9 +71,9 @@ function love.draw()
             color = hoverColor
         end
         love.graphics.setColor(color)
-        love.graphics.rectangle("fill", button.x, button.y, button.width, button.height)
+        drawRoundedRectangle(button.x, button.y, button.width, button.height, button.cornerRadius)
         love.graphics.setColor(black)
-        local textX = button.x + button.width / 2 - buttonFont:getWidth(button.text) / 2
+        local textX = button.x + button.padding
         local textY = button.y + button.height / 2 - buttonFont:getHeight() / 2
         love.graphics.print(button.text, textX, textY)
     end
@@ -99,4 +105,17 @@ function handleButtonClick(action)
     elseif action == "quit" then
         love.event.quit()
     end
+end
+
+function drawRoundedRectangle(x, y, width, height, cornerRadius)
+    -- Draw rounded rectangle using arcs and lines
+    love.graphics.rectangle("fill", x + cornerRadius, y, width - 2 * cornerRadius, height) -- Center rectangle
+    love.graphics.rectangle("fill", x, y + cornerRadius, cornerRadius, height - 2 * cornerRadius) -- Left rectangle
+    love.graphics.rectangle("fill", x + width - cornerRadius, y + cornerRadius, cornerRadius, height - 2 * cornerRadius) -- Right rectangle
+
+    -- Draw rounded corners
+    love.graphics.arc("fill", x + cornerRadius, y + cornerRadius, cornerRadius, math.pi, 1.5 * math.pi) -- Top-left corner
+    love.graphics.arc("fill", x + width - cornerRadius, y + cornerRadius, cornerRadius, 1.5 * math.pi, 2 * math.pi) -- Top-right corner
+    love.graphics.arc("fill", x + cornerRadius, y + height - cornerRadius, cornerRadius, 0.5 * math.pi, math.pi) -- Bottom-left corner
+    love.graphics.arc("fill", x + width - cornerRadius, y + height - cornerRadius, cornerRadius, 0, 0.5 * math.pi) -- Bottom-right corner
 end
