@@ -60,7 +60,7 @@ end
 function love.draw()
     -- Draw title
     love.graphics.setFont(titleFont)
-    love.graphics.setColor(black)
+    love.graphics.setColor(white)
     love.graphics.print(titleText, titleX, titleY)
 
     -- Draw buttons
