@@ -1,5 +1,3 @@
--- scripts/card.lua
-
 Card = {}
 
 function Card:new(value, suit, cardPack)
@@ -7,15 +5,22 @@ function Card:new(value, suit, cardPack)
         value = value,
         suit = suit,
         image = love.graphics.newImage("assets/card_packs/" .. cardPack .. "/" .. value .. ".jpeg"),
-        backImage = love.graphics.newImage("assets/card_packs/" .. cardPack .. "/back.jpeg"),  -- Card back image
-        holographicTexture = love.graphics.newImage("assets/holographic_overlay.png"),  -- Holographic overlay
-        holographicOffset = 0,  -- Offset for animating the holographic texture
-        flipped = false  -- Track whether the card is flipped
+        backImage = love.graphics.newImage("assets/card_packs/" .. cardPack .. "/back.jpeg"),
+        holographicShader = love.graphics.newShader("assets/shaders/gold.glsl"),
+        goldShader = love.graphics.newShader("assets/shaders/gold.glsl"),
+        maskImage = love.graphics.newImage("assets/card_packs/back_mask.png"),  -- Initialize mask here
+        time = 0,
+        flipped = false
     }
+    
+    -- Send mask texture once during initialization
+    card.goldShader:send("u_mask", card.maskImage)
+    
     setmetatable(card, self)
     self.__index = self
     return card
 end
+
 
 function Card:draw(x, y)
     -- Define card dimensions and scaling
@@ -40,31 +45,16 @@ function Card:draw(x, y)
     love.graphics.setColor(1, 1, 1)  -- Reset color to white
 
     if self.flipped then
-        -- Draw the card back image if flipped
+        -- Use gold shader
+        self.goldShader:send("u_time", self.time)  -- Send time to animate the shader
+        self.goldShader:send("u_resolution", {love.graphics.getWidth(), love.graphics.getHeight()})
+        love.graphics.setShader(self.goldShader)
         love.graphics.draw(self.backImage, cardX, cardY, 0, scale, scale)
-
-        -- Use a stencil to clip the holographic overlay to the card back
-        love.graphics.stencil(function()
-            love.graphics.rectangle("fill", cardX, cardY, scaledWidth, scaledHeight)
-        end, "replace", 1)
-        love.graphics.setStencilTest("greater", 0)
-
-        -- Draw the holographic overlay (clipped to the card back)
-        love.graphics.setColor(1, 1, 1, 0.5)  -- Semi-transparent white
-
-        -- Draw the original texture
-        love.graphics.draw(self.holographicTexture, cardX - self.holographicOffset, cardY, 0, scale, scale)
-
-        -- Draw the mirrored texture for seamless animation
-        love.graphics.draw(self.holographicTexture, cardX - self.holographicOffset + self.holographicTexture:getWidth() * scale, cardY, 0, scale, scale)
-
-        -- Disable stencil test
-        love.graphics.setStencilTest()
+        love.graphics.setShader()  -- Reset the shader
     else
-        -- Draw the card front image if not flipped
         love.graphics.draw(self.image, cardX, cardY, 0, scale, scale)
     end
-
+    
     -- Draw the value and suit overlay on the border (if not flipped)
     if not self.flipped then
         local valueText = self:getValueText()
@@ -90,14 +80,10 @@ function Card:draw(x, y)
 end
 
 function Card:update(dt)
-    -- Update the holographic overlay animation
+    -- Update the time variable for the shader animation
     if self.flipped then
-        self.holographicOffset = self.holographicOffset + dt * 100  -- Adjust speed as needed
-
-        -- Reset the offset when it reaches the right edge of the card
-        if self.holographicOffset > self.holographicTexture:getWidth() * 0.35 then
-            self.holographicOffset = 0
-        end
+        self.time = self.time + dt
+        self.goldShader:send("u_time", self.time)  -- Ensure this is called every frame
     end
 end
 
