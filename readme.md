@@ -21,3 +21,12 @@
 **Add?**
 
     - Multiplayer functionatlity?
+
+**Notes:**
+
+- Colors:
+    - <span style="display:inline-block;width:15px;height:15px;background-color:#F4F3EE;"></span> `#F4F3EE`
+    - <span style="display:inline-block;width:15px;height:15px;background-color:#A27E8E;"></span> `#A27E8E`
+    - <span style="display:inline-block;width:15px;height:15px;background-color:#A77464;"></span> `#A77464`
+    - <span style="display:inline-block;width:15px;height:15px;background-color:#88292F;"></span> `#88292F`
+    - <span style="display:inline-block;width:15px;height:15px;background-color:#2E1E0F;"></span> `#2E1E0F`

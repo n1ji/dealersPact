@@ -15,7 +15,7 @@ function love.load()
     -- Convert colors from hex
     require("scripts.utils")
 
-    local bgR, bgG, bgB = hexToRGB("#A77464") -- Brown Sugar
+    local bgR, bgG, bgB = hexToRGB("#A77464") -- BG Color
     love.graphics.setBackgroundColor(bgR, bgG, bgB)
 end
 
