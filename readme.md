@@ -32,3 +32,13 @@
     - <span style="display:inline-block;width:15px;height:15px;background-color:#88292F;"></span> `#88292F`
     - <span style="display:inline-block;width:15px;height:15px;background-color:#2E1E0F;"></span> `#2E1E0F`
     - <span style="display:inline-block;width:15px;height:15px;background-color:#7FB069;"></span> `#7FB069?`
+
+---
+
+New concept:
+
+Completely unique game where you draw 5 cards. 2 cards are a resource point, 2 are a action card, and 1 is a gamble card.
+
+The resource and action cards are played before the dealer reveals their play.
+
+The gamble card is visible to let the player know what the modifier of the round is.

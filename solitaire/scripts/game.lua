@@ -14,7 +14,10 @@ Game = {
     tableauStartX = 450,  -- Adjusted starting X position for tableau piles
     tableauStartY = 350,  -- Adjusted starting Y position for tableau piles
     cardWidth = 100,  -- Width of a card after scaling (adjust based on your card image dimensions)
-    cardHeight = 150  -- Height of a card after scaling (adjust based on your card image dimensions)
+    cardHeight = 150,  -- Height of a card after scaling (adjust based on your card image dimensions)
+    reshuffleButton = {x = 100, y = 310, width = 100, height = 50, text = "Reshuffle", enabled = true},
+    maxReshuffles = 3,  -- Number of reshuffles allowed
+    reshuffleCount = 0,  -- Current reshuffle count
 }
 
 function Game:initialize()
@@ -24,8 +27,8 @@ function Game:initialize()
     -- Initialize the deck
     self:initializeDeck()
 
-    -- Shuffle the deck
-    self:shuffleDeck()
+    -- Debug: Print the number of cards in the deck after initialization
+    print("Number of cards in deck after initialization: " .. #self.deck)
 
     -- Initialize the tableau, foundations, stock, and waste
     self:initializeTableau()
@@ -33,8 +36,16 @@ function Game:initialize()
     self:initializeStock()
     self.waste = {}
 
+    -- Debug: Print the number of cards in the stock pile after initialization
+    print("Number of cards in stock after initialization: " .. #self.stock)
+
     -- Deal cards to the tableau
     self:dealTableau()
+
+    -- Debug: Print the number of cards in each tableau pile after dealing
+    for i, pile in ipairs(self.tableau) do
+        print("Tableau pile " .. i .. " has " .. #pile .. " cards")
+    end
 end
 
 function Game:initializeDeck()
@@ -45,12 +56,17 @@ function Game:initializeDeck()
             table.insert(self.deck, Card:new(value, suit, self.cardPack))
         end
     end
+
+    -- Shuffle the deck
+    self:shuffleDeck()
 end
 
 function Game:shuffleDeck()
-    for i = #self.deck, 2, -1 do
+    -- Shuffle the deck or stock pile
+    local pile = self.deck or self.stock
+    for i = #pile, 2, -1 do
         local j = math.random(i)
-        self.deck[i], self.deck[j] = self.deck[j], self.deck[i]
+        pile[i], pile[j] = pile[j], pile[i]
     end
 end
 
@@ -58,6 +74,25 @@ function Game:initializeTableau()
     self.tableau = {}
     for i = 1, 7 do
         self.tableau[i] = {}
+    end
+end
+
+function Game:dealTableau()
+    for i = 1, 7 do
+        for j = 1, i do
+            if #self.stock > 0 then
+                local card = table.remove(self.stock, 1)
+                if j == i then
+                    card.flipped = false  -- Only the bottom card in each tableau pile is face-up
+                else
+                    card.flipped = true
+                end
+                table.insert(self.tableau[i], card)
+            else
+                -- If the stock pile is empty, stop dealing cards
+                break
+            end
+        end
     end
 end
 
@@ -69,25 +104,33 @@ function Game:initializeFoundations()
 end
 
 function Game:initializeStock()
+    -- Move all cards from the deck to the stock pile
     self.stock = {}
+    for i = 1, #self.deck do
+        table.insert(self.stock, table.remove(self.deck, 1))
+    end
+
+    -- Debug: Print the number of cards in the stock pile after initialization
+    print("Number of cards in stock after initialization: " .. #self.stock)
 end
 
 function Game:dealTableau()
     for i = 1, 7 do
         for j = 1, i do
-            local card = table.remove(self.deck, 1)
-            if j == i then
-                card.flipped = false
+            if #self.stock > 0 then
+                local card = table.remove(self.stock, 1)
+                if j == i then
+                    card.flipped = false  -- Only the bottom card in each tableau pile is face-up
+                else
+                    card.flipped = true
+                end
+                table.insert(self.tableau[i], card)
             else
-                card.flipped = true
+                -- If the stock pile is empty, stop dealing cards
+                break
             end
-            table.insert(self.tableau[i], card)
         end
     end
-
-    -- Remaining cards go to the stock
-    self.stock = self.deck
-    self.deck = {}
 end
 
 function Game:update(dt)
@@ -143,6 +186,15 @@ function Game:draw()
     if #self.waste > 0 then
         self.waste[#self.waste]:draw(wasteX, wasteY)
     end
+
+    love.graphics.setColor(1, 1, 1)
+    if not self.reshuffleButton.enabled then
+        love.graphics.setColor(0.5, 0.5, 0.5) -- Gray out the button if disabled
+    end
+    love.graphics.rectangle("line", self.reshuffleButton.x, self.reshuffleButton.y, self.reshuffleButton.width, self.reshuffleButton.height)
+    love.graphics.setColor(0, 0, 0)
+    love.graphics.setFont(love.graphics.newFont(14))
+    love.graphics.print(self.reshuffleButton.text, self.reshuffleButton.x + 10, self.reshuffleButton.y + 10)
 
     -- Check for win condition
     if self:checkWin() then
@@ -223,6 +275,12 @@ function Game:handleMousePress(x, y, button)
                 end
             end
         end
+
+        -- Check if reshuffle button was clicked
+        if self.reshuffleButton.enabled and x >= self.reshuffleButton.x and x <= self.reshuffleButton.x + self.reshuffleButton.width
+                and y >= self.reshuffleButton.y and y <= self.reshuffleButton.y + self.reshuffleButton.height then
+            self:reshuffle()
+        end
     end
 end
 
@@ -264,6 +322,64 @@ function Game:autoMoveCard(card)
     end
 end
 
+function Game:reshuffle()
+    if self.reshuffleCount < self.maxReshuffles then
+        -- Debug: Print the number of cards in the waste pile before moving
+        print("Number of cards in waste before reshuffle: " .. #self.waste)
+
+        -- Move all cards from the waste pile back to the stock pile
+        for i = #self.waste, 1, -1 do
+            local card = table.remove(self.waste, i)
+            card.flipped = true  -- Flip the cards back when moving to stock
+            table.insert(self.stock, card)
+        end
+
+        -- Debug: Print the number of cards in the stock pile after moving waste cards
+        print("Number of cards in stock after moving waste cards: " .. #self.stock)
+
+        -- Debug: Print the number of cards in the tableau piles before moving
+        local totalTableauCards = 0
+        for i, pile in ipairs(self.tableau) do
+            totalTableauCards = totalTableauCards + #pile
+        end
+        print("Number of cards in tableau before reshuffle: " .. totalTableauCards)
+
+        -- Move all cards from the tableau piles back to the stock pile
+        for i, pile in ipairs(self.tableau) do
+            for j = #pile, 1, -1 do
+                local card = table.remove(pile, j)
+                card.flipped = true  -- Flip the cards back when moving to stock
+                table.insert(self.stock, card)
+            end
+        end
+
+        -- Debug: Print the number of cards in the stock pile after moving tableau cards
+        print("Number of cards in stock after moving tableau cards: " .. #self.stock)
+
+        -- Shuffle the stock pile
+        self:shuffleDeck()
+
+        -- Debug: Print the number of cards in the stock pile after shuffling
+        print("Number of cards in stock after shuffling: " .. #self.stock)
+
+        -- Increment the reshuffle count
+        self.reshuffleCount = self.reshuffleCount + 1
+
+        -- Disable the reshuffle button if the limit is reached
+        if self.reshuffleCount >= self.maxReshuffles then
+            self.reshuffleButton.enabled = false
+        end
+
+        -- Reinitialize the tableau piles
+        self:initializeTableau()
+        self:dealTableau()
+
+        -- Debug: Print the number of cards in each tableau pile
+        for i, pile in ipairs(self.tableau) do
+            print("Tableau pile " .. i .. " has " .. #pile .. " cards")
+        end
+    end
+end
 
 
 function Game:start(cardPack)
