@@ -9,6 +9,7 @@ function love.load()
     require("scripts.menu")
     require("scripts.utils")
     require("scripts.cards")
+    require("scripts.ui")
 
     -- Initialize the menu
     Menu:initialize()

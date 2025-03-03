@@ -18,6 +18,8 @@ Game = {
     cardHeight = 768 * 0.3,
     hoveredCard = nil,
     hoverFont = love.graphics.newFont("fonts/NotoSansBold.ttf", 14),
+    deckPosition = {x = 1200, y = 50},
+    dealingAnimation = nil,
 }
 
 function Game:indexOf(table, element)
@@ -83,18 +85,34 @@ function Game:drawHands()
     self.playerHand = {}
     self.dealerHand = {}
     for i = 1, 5 do
-        table.insert(self.playerHand, table.remove(self.deck, 1))
+        --table.insert(self.playerHand, table.remove(self.deck, 1))
         table.insert(self.dealerHand, table.remove(self.dealerDeck, 1))
+        self:dealCard()
+        love.wait(0.5)
     end
 end
 
-function Game:drawCard()
+function Game:dealCard()
     if #self.deck > 0 then
-        table.insert(self.playerHand, table.remove(self.deck, 1))
+        local card = table.remove(self.deck, 1)
+        card.x = self.deckPosition.x
+        card.y = self.deckPosition.y
+        card.targetX = self.playerStartX + (#self.playerHand) * (self.cardWidth + self.cardSpacing)
+        card.targetY = self.playerStartY
+        card.animationProgress = 0
+        self.dealingAnimation = card
     else
         print("No more cards in the deck!")
     end
 end
+
+-- function Game:drawCard()
+--     if #self.deck > 0 then
+--         table.insert(self.playerHand, table.remove(self.deck, 1))
+--     else
+--         print("No more cards in the deck!")
+--     end
+-- end
 
 function Game:update(dt)
     -- Update hovered card
@@ -108,6 +126,16 @@ function Game:update(dt)
             self.hoveredCard = card
         end
     end
+
+    if self.dealingAnimation then
+        local card = self.dealingAnimation
+        card.animationProgress = card.animationProgress + dt * 2
+        if card.animationProgress >= 1 then
+            card.animationProgress = 1
+            table.insert(self.playerHand, card)
+            self.dealingAnimation = nil
+        end
+    end
 end
 
 function Game:draw()
@@ -115,6 +143,12 @@ function Game:draw()
     love.graphics.setColor(1, 1, 1)
     love.graphics.setFont(love.graphics.newFont("fonts/NotoSansBold.ttf", 20))
     love.graphics.print("Soul Essence: " .. self.soulEssence, 20, 20)
+
+    -- Draw deck
+    love.graphics.setColor(0.5, 0.5, 0.5)
+    love.graphics.rectangle("fill", self.deckPosition.x, self.deckPosition.y, self.cardWidth, self.cardHeight)
+    love.graphics.setColor(1, 1, 1)
+    love.graphics.print("Deck", self.deckPosition.x + 10, self.deckPosition.y + 10)
 
     -- Draw player's hand
     for i, card in ipairs(self.playerHand) do
@@ -128,6 +162,13 @@ function Game:draw()
         local cardX = self.dealerStartX + (i - 1) * (self.cardWidth + self.cardSpacing)
         local cardY = self.dealerStartY - 200
         card:draw(cardX, cardY)
+    end
+
+    if self.dealingAnimation then
+        local card = self.dealingAnimation
+        local x = card.x + (card.targetX - card.x) * card.animationProgress
+        local y = card.y + (card.targetY - card.y) * card.animationProgress
+        card:draw(x, y)
     end
 
     -- Draw hovered card details
@@ -182,6 +223,13 @@ end
 
 function Game:handleMousePress(x, y, button)
     if button == 1 then
+        -- Check if the deck was clicked
+        if x >= self.deckPosition.x and x <= self.deckPosition.x + self.cardWidth and
+           y >= self.deckPosition.y and y <= self.deckPosition.y + self.cardHeight then
+            self:dealCard()
+        end
+
+        -- Check if a card in the player's hand was clicked
         for i, card in ipairs(self.playerHand) do
             local cardX = self.dealerStartX + (i - 1) * (self.cardWidth + self.cardSpacing)
             local cardY = self.dealerStartY
