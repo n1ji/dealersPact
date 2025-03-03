@@ -49,10 +49,10 @@
 | Soul Bargain       | Trade 5 SE to remove one of the Dealer’s active cards                                |
 | Hand Refresh       | Discard your hand and draw 5 new cards                                               |
 | Dealer’s Bluff     | Force the Dealer to reveal their hand                                                |
-| Ethereal Swap      | Swap your hand with the Dealer’s hand                                               |
+| Ethereal Swap      | Swap your hand with the Dealer’s hand                                                |
 | Soul Anchor        | Prevent the Dealer from playing cards for one turn                                   |
 | Fortune’s Grasp    | Steal 10 points from the Dealer                                                      |
-| Twisted Fate       | Swap the Wheel of Fate effect with a random one                                     |
+| Twisted Fate       | Swap the Wheel of Fate effect with a random one                                      |
 | Soul Bind          | Prevent the Dealer from using SE for one round                                       |
 | Phantom Swap       | Swap one of your cards with a random card from the discard pile                      |
 | Fate’s Edge        | Gain 5 SE for every gamble card played this round                                    |
@@ -90,7 +90,7 @@
 | Unstable Points    | The player's points for this round fluctuate randomly (-10 to +10)                   |
 | Hand Disruption    | Forces the player to discard a random card                                           |
 | Forced Wager       | The player must gamble 10 SE                                                         |
-| Extra Draw         | The Dealer draws an extra card this round                                           |
+| Extra Draw         | The Dealer draws an extra card this round                                            |
 | Twist of Fate      | The Wheel of Fate is spun twice and both effects apply                               |
 | Phantom Stash      | The Dealer can reuse one of their previously played cards                            |
 | Soul Tax           | The player loses 1 SE for every 10 points they score this round                      |
@@ -102,23 +102,23 @@
 
 | **Effect Name**   | **Effect Description**                                                            |
 | ----------------- | --------------------------------------------------------------------------------- |
-| Double or Nothing | All gains and losses are doubled                                                 |
-| Shadow Bet        | The Dealer places a secret wager revealed at round end                           |
-| Twisted Hands     | The player and Dealer must swap a random card from their hand                    |
-| Lucky Draw        | The player can draw two additional cards but must discard one immediately        |
-| Doom Timer        | The round must be completed in a set number of moves or instant loss             |
-| Loaded Deck       | The player may pick one card from their discard pile to reuse                    |
-| Blindfolded Luck  | The player must play all their cards blindly (without seeing their effects)      |
-| Blood Pact        | The player gains 20 SE but loses 10 SE per round afterward                       |
-| Dealer’s Favor    | The Dealer starts with an additional card                                        |
-| Fate Swap         | The highest value card in play switches between the player and Dealer            |
-| Burning Cards     | Each turn, a random card from both hands is burned (removed from play)           |
-| Corrupt Fortune   | Every coin-flip effect automatically fails                                       |
-| Ghost Hand        | One random action card is unusable this round                                    |
-| Stacked Odds      | The Dealer starts with +10 points                                                |
-| Soul Gamble       | The player can bet half their Soul Essence for a 50% chance to double it         |
-| Delayed Fate      | All Wheel effects are applied in the next round instead of immediately           |
-| Dealer’s Dice     | The Dealer rolls a die; on a 6, they steal one of the player’s cards permanently |
-| Unstable Reality  | Every card played has a 25% chance to trigger twice                              |
-| Cursed Winnings   | If the player wins this round, they lose 5 SE                                    |
-| Final Gambit      | If this is the last round, all effects are tripled                               |
+| Double or Nothing | All gains and losses are doubled                                                  |
+| Shadow Bet        | The Dealer places a secret wager revealed at round end                            |
+| Twisted Hands     | The player and Dealer must swap a random card from their hand                     |
+| Lucky Draw        | The player can draw two additional cards but must discard one immediately         |
+| Doom Timer        | The round must be completed in a set number of moves or instant loss              |
+| Loaded Deck       | The player may pick one card from their discard pile to reuse                     |
+| Blindfolded Luck  | The player must play all their cards blindly (without seeing their effects)       |
+| Blood Pact        | The player gains 20 SE but loses 10 SE per round afterward                        |
+| Dealer’s Favor    | The Dealer starts with an additional card                                         |
+| Fate Swap         | The highest value card in play switches between the player and Dealer             |
+| Burning Cards     | Each turn, a random card from both hands is burned (removed from play)            |
+| Corrupt Fortune   | Every coin-flip effect automatically fails                                        |
+| Ghost Hand        | One random action card is unusable this round                                     |
+| Stacked Odds      | The Dealer starts with +10 points                                                 |
+| Soul Gamble       | The player can bet half their Soul Essence for a 50% chance to double it          |
+| Delayed Fate      | All Wheel effects are applied in the next round instead of immediately            |
+| Dealer’s Dice     | The Dealer rolls a die; on a 6, they steal one of the player’s cards permanently  |
+| Unstable Reality  | Every card played has a 25% chance to trigger twice                               |
+| Cursed Winnings   | If the player wins this round, they lose 5 SE                                     |
+| Final Gambit      | If this is the last round, all effects are tripled                                |
