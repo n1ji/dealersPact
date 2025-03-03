@@ -20,6 +20,7 @@ Game = {
     hoverFont = love.graphics.newFont("fonts/NotoSansBold.ttf", 14),
     deckPosition = {x = 1200, y = 50},
     dealingAnimation = nil,
+    maxHandSize = 5,
 }
 
 function Game:indexOf(table, element)
@@ -87,12 +88,16 @@ function Game:drawHands()
     for i = 1, 5 do
         --table.insert(self.playerHand, table.remove(self.deck, 1))
         table.insert(self.dealerHand, table.remove(self.dealerDeck, 1))
-        self:dealCard()
-        love.wait(0.5)
     end
 end
 
 function Game:dealCard()
+    -- Check if the player's hand is already full
+    if #self.playerHand >= self.maxHandSize then
+        print("Your hand is full! You can't draw more than 5 cards.")
+        return
+    end
+
     if #self.deck > 0 then
         local card = table.remove(self.deck, 1)
         card.x = self.deckPosition.x
@@ -127,6 +132,7 @@ function Game:update(dt)
         end
     end
 
+    -- Update dealing animation
     if self.dealingAnimation then
         local card = self.dealingAnimation
         card.animationProgress = card.animationProgress + dt * 2
@@ -164,6 +170,7 @@ function Game:draw()
         card:draw(cardX, cardY)
     end
 
+    -- Draw the card being dealt (if any)
     if self.dealingAnimation then
         local card = self.dealingAnimation
         local x = card.x + (card.targetX - card.x) * card.animationProgress
@@ -172,20 +179,10 @@ function Game:draw()
     end
 
     -- Draw hovered card details
-    -- if self.hoveredCard then
-    --     love.graphics.setColor(0, 0, 0, 0.8) -- Semi-transparent black background
-    --     love.graphics.rectangle("fill", 10, 50, 300, 100)
-    --     love.graphics.setColor(1, 1, 1) -- White text
-    --     love.graphics.setFont(love.graphics.newFont(14))
-    --     love.graphics.print("Card: " .. self.hoveredCard.name, 20, 60)
-    --     love.graphics.print("Effect: " .. self.hoveredCard.effect, 20, 80)
-    -- end
-    -- Draw hovered card details
-
     if self.hoveredCard then
         local font = self.hoverFont
-        local padding = 10 -- Padding around the text
-        local maxWidth = 500 -- Maximum width of the hover box
+        local padding = 10
+        local maxWidth = 500
 
         -- Split the effect text into multiple lines if it's too long
         local effectLines = {}
@@ -202,21 +199,21 @@ function Game:draw()
 
         -- Calculate the total height of the hover box
         local lineHeight = font:getHeight()
-        local totalHeight = padding * 2 + lineHeight * (#effectLines + 1) -- +1 for the card name
+        local totalHeight = padding * 2 + lineHeight * (#effectLines + 1)
 
         -- Draw the hover box background
-        love.graphics.setColor(0, 0, 0, 0.8) -- Semi-transparent black background
+        love.graphics.setColor(0, 0, 0, 0.8)
         love.graphics.rectangle("fill", 10, 50, maxWidth + padding * 2, totalHeight)
 
         -- Draw the card name
-        love.graphics.setColor(1, 1, 1) -- White text
+        love.graphics.setColor(1, 1, 1)
         love.graphics.setFont(font)
         love.graphics.print("Card: " .. self.hoveredCard.name, 10 + padding, 50 + padding)
 
         -- Draw the effect lines
-        love.graphics.print("Effect: " .. effectLines[1], 10 + padding, 50 + padding + lineHeight) -- First line with "Effect: "
+        love.graphics.print("Effect: " .. effectLines[1], 10 + padding, 50 + padding + lineHeight)
         for i = 2, #effectLines do
-            love.graphics.print(effectLines[i], 10 + padding, 50 + padding + lineHeight * (i + 1)) -- Subsequent lines without "Effect: "
+            love.graphics.print(effectLines[i], 10 + padding, 50 + padding + lineHeight * (i + 1))
         end
     end
 end
@@ -237,6 +234,20 @@ function Game:handleMousePress(x, y, button)
                 self:playCard(card)
             end
         end
+    end
+end
+
+function Game:playCard(card)
+    if card.type == "resource" then
+        self:applyResourceEffect(card.effect)
+    elseif card.type == "action" then
+        self:applyActionEffect(card.effect)
+    elseif card.type == "gamble" then
+        self:applyGambleEffect(card.effect)
+    end
+    local index = self:indexOf(self.playerHand, card)
+    if index ~= -1 then
+        table.remove(self.playerHand, index)
     end
 end
 
@@ -294,4 +305,8 @@ function Game:start(cardPack)
     self.cardPack = cardPack
     self.state = "playing"
     self:initialize()
+
+    for i = 1, 5 do
+        self:dealCard()
+    end
 end
