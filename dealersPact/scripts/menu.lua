@@ -12,10 +12,14 @@ function Menu:initialize()
     self.black = {0, 0, 0, 1}
     self.gray = {0.8, 0.8, 0.8, 1}
     self.hoverColor = {0.6, 0.6, 0.6, 1}
-    self.backgroundColor = {hexToRGB("#A77464")}
+    self.backgroundColor = {hexToRGB("#3B1E5F")}
 
-    self.titleFont = love.graphics.newFont("fonts/ZCOOL.ttf", 74)
-    self.buttonFont = love.graphics.newFont("fonts/ZCOOL.ttf", 50)
+    self.titleFont = love.graphics.newFont("fonts/EnchantedLand.otf", 74)
+    self.buttonFont = love.graphics.newFont("fonts/EnchantedLand.otf", 50)
+
+    self.music = love.audio.newSource("assets/sounds/bgm.mp3", "stream")
+    love.audio.setVolume(0.2)
+    love.audio.play(self.music)
 
     self.titleText = "The Dealer's Pact"
     self.titleX = self.screenWidth / 2 - self.titleFont:getWidth(self.titleText) / 2

@@ -20,7 +20,7 @@ Game = {
     hoverFont = love.graphics.newFont("fonts/NotoSansBold.ttf", 14),
     deckPosition = {x = 1200, y = 50},
     dealingAnimation = nil,
-    maxHandSize = 5,
+    maxHandSize = 5, -- Maximum number of cards in the player's hand
 }
 
 function Game:indexOf(table, element)
@@ -86,7 +86,6 @@ function Game:drawHands()
     self.playerHand = {}
     self.dealerHand = {}
     for i = 1, 5 do
-        --table.insert(self.playerHand, table.remove(self.deck, 1))
         table.insert(self.dealerHand, table.remove(self.dealerDeck, 1))
     end
 end
@@ -106,18 +105,11 @@ function Game:dealCard()
         card.targetY = self.playerStartY
         card.animationProgress = 0
         self.dealingAnimation = card
+        card.sound:play()
     else
         print("No more cards in the deck!")
     end
 end
-
--- function Game:drawCard()
---     if #self.deck > 0 then
---         table.insert(self.playerHand, table.remove(self.deck, 1))
---     else
---         print("No more cards in the deck!")
---     end
--- end
 
 function Game:update(dt)
     -- Update hovered card
@@ -228,26 +220,12 @@ function Game:handleMousePress(x, y, button)
 
         -- Check if a card in the player's hand was clicked
         for i, card in ipairs(self.playerHand) do
-            local cardX = self.dealerStartX + (i - 1) * (self.cardWidth + self.cardSpacing)
-            local cardY = self.dealerStartY
+            local cardX = self.playerStartX + (i - 1) * (self.cardWidth + self.cardSpacing)
+            local cardY = self.playerStartY
             if x >= cardX and x <= cardX + self.cardWidth and y >= cardY and y <= cardY + self.cardHeight then
                 self:playCard(card)
             end
         end
-    end
-end
-
-function Game:playCard(card)
-    if card.type == "resource" then
-        self:applyResourceEffect(card.effect)
-    elseif card.type == "action" then
-        self:applyActionEffect(card.effect)
-    elseif card.type == "gamble" then
-        self:applyGambleEffect(card.effect)
-    end
-    local index = self:indexOf(self.playerHand, card)
-    if index ~= -1 then
-        table.remove(self.playerHand, index)
     end
 end
 
@@ -270,8 +248,7 @@ function Game:applyResourceEffect(effect)
         self.soulEssence = self.soulEssence + 10
     elseif effect == "+5 points, Draw 1" then
         self.soulEssence = self.soulEssence + 5
-        self:drawCard() -- Draw a card after gaining points
-    -- Add more resource effects here
+        self:dealCard()
     end
 end
 
@@ -280,7 +257,6 @@ function Game:applyActionEffect(effect)
         self:swapCardWithDealer()
     elseif effect == "Reroll the Wheel of Fate effect for this round" then
         self:spinWheelOfFate()
-    -- Add more action effects here
     end
 end
 
@@ -291,14 +267,12 @@ function Game:applyGambleEffect(effect)
         else
             self.soulEssence = self.soulEssence - 10
         end
-    -- Add more gamble effects here
     end
 end
 
 function Game:spinWheelOfFate()
     local effect = self.wheelOfFate[math.random(#self.wheelOfFate)]
     print("Wheel of Fate: " .. effect.name)
-    -- Apply the effect
 end
 
 function Game:start(cardPack)
@@ -306,6 +280,7 @@ function Game:start(cardPack)
     self.state = "playing"
     self:initialize()
 
+    -- Deal 5 cards to the player at the start of the game
     for i = 1, 5 do
         self:dealCard()
     end

@@ -7,7 +7,8 @@ function Card:new(type, name, effect)
         type = type,
         name = name,
         effect = effect,
-        image = love.graphics.newImage("assets/card_packs/animals/" .. type .. ".jpeg"),
+        sound = love.audio.newSource("assets/sounds/card.ogg", "static"),
+        image = love.graphics.newImage("assets/cards/" .. type .. ".png"),
         flipped = false
     }
     setmetatable(card, self)

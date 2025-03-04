@@ -1,5 +1,13 @@
 # The Dealer's Pact - Card List
+---
 
+Prompts used to create cards:
+- Resource: "soul essence, coin, resource icon, magic the gathering inspired, icon only, detailed icon, circle, black textured rim, textured, gothic, (seed:::977005197)"
+- Action: "flame, lightning, swords, action icon, magic the gathering inspired, icon only, detailed icon, circle, black textured rim, textured, gothic, (seed:::977005197)"
+- Gamble: ""
+- Dealer: "A menacing portrait of a dragon, shrouded in a cloak of midnight black, the fabric adorned with intricate gothic patterns that seem to dance in the flickering candlelight. The creature's scales, a mesmerizing blend of onyx and obsidian, reflect the eerie glow, casting long, ominous shadows across the ornate, velvet-draped table. Its fiery eyes pierce through the darkness, locking onto the unseen player with a gaze that is both alluring and terrifying. In one clawed hand, the dragon deftly shuffles a deck of ancient cards, each emblazoned with mysterious symbols that whisper of arcane power and fate. The other hand is poised to deal, claw tips glistening with a hint of danger. The room itself is a testament to the macabre elegance of its inhabitant, with high arched ceilings, stained glass windows depicting mythical battles, and walls lined with dusty tomes of forgotten lore. The atmosphere is thick with anticipation, the air crackling with unspoken challenges and the scent of treasure long sought but never claimed. This chilling tableau beckons viewers to step into a realm of high stakes and higher risks, where the cards may reveal not just a game's outcome, but the very fabric of destiny itself. (close up portrait)"
+
+---
 ## Resource Cards (20)
 
 | **Card Name**      | **Effect**                                                                           |
