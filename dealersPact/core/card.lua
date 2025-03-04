@@ -22,11 +22,6 @@ function Card:draw(x, y, shader)
     local cardHeight = self.image:getHeight() * scale
     love.graphics.draw(self.image, x, y, 0, scale, scale)
 
-    -- love.graphics.setColor(0, 0, 0) -- black text
-    -- love.graphics.newFont("assets/fonts/EnchantedLand.otf", 12)
-    -- love.graphics.print(self.name, y + 5, y + 5)
-    -- love.graphics.setColor(1, 1, 1)
-
     if shader then
         love.graphics.setShader(shader)
     end
