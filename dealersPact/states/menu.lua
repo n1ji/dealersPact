@@ -21,7 +21,7 @@ function Menu:initialize()
     self.buttonFont = love.graphics.newFont("assets/fonts/EnchantedLand.otf", 50)
 
     self.music = love.audio.newSource("assets/sounds/bgm.mp3", "stream")
-    love.audio.setVolume(0.05)
+    love.audio.setVolume(0)
     love.audio.play(self.music)
 
     self.titleText = "The Dealer's Pact"
@@ -35,10 +35,11 @@ function Menu:initialize()
     }
 
     self.settingsButtons = {
-        Button:new("Music Volume +", self.screenWidth / 2 - 100, 200, 200, 50, "musicUp", 20, 40),
-        Button:new("Music Volume -", self.screenWidth / 2 - 100, 250, 200, 50, "musicDown", 20, 40),
-        Button:new("Effects Volume +", self.screenWidth / 2 - 100, 300, 200, 50, "effectsUp", 20, 40),
-        Button:new("Effects Volume -", self.screenWidth / 2 - 100, 350, 200, 50, "effectsDown", 20, 40),
+        Button:new("Music Volume +", self.screenWidth / 2 - 100, 200, self.titleFont:getWidth(self.titleText), 50, "musicUp", 20, 40),
+        Button:new("Music Volume -", self.screenWidth / 2 - 100, 250, self.titleFont:getWidth(self.titleText), 50, "musicDown", 20, 40),
+        Button:new("Effects Volume +", self.screenWidth / 2 - 100, 300, self.titleFont:getWidth(self.titleText), 50, "effectsUp", 20, 40),
+        Button:new("Effects Volume -", self.screenWidth / 2 - 100, 350, self.titleFont:getWidth(self.titleText), 50, "effectsDown", 20, 40),
+        Button:new("Mute Music", self.screenWidth / 2 - 100, 400, self.titleFont:getWidth(self.titleText), 50, "muteMusic", 20, 40),
         Button:new("Back", self.screenWidth / 2 - 100, 400, 200, 50, "back", 20, 40)
     }
 
@@ -91,8 +92,10 @@ function Menu:handleMousePress(x, y, button)
                     -- Increase effects volume
                 elseif btn.action == "effectsDown" then
                     -- Decrease effects volume
+                elseif btn.action == "muteMusic" then
+                    love.audio.setVolume(0)
                 elseif btn.action == "back" then
-                    self.state = "main"
+                    self.state = "mainMenu"
                 end
             end
         end

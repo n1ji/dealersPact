@@ -8,17 +8,17 @@ Game = {
     dealerHand = {},
     soulEssence = 100,
     wheelOfFate = {},
-    cardScale = 0.15,
-    cardSpacing = 20,
-    dealerStartX = 450,
-    dealerStartY = 350,
-    playerStartX = 450,
+    cardScale = 0.5,
+    cardSpacing = 10,
+    dealerStartX = 430,
+    dealerStartY = 300,
+    playerStartX = 430,
     playerStartY = 600,
-    cardWidth = 512 * 0.3,
-    cardHeight = 768 * 0.3,
+    cardWidth = 338 * 0.5,
+    cardHeight = 507 * 0.5,
     hoveredCard = nil,
     hoverFont = love.graphics.newFont("assets/fonts/NotoSansBold.ttf", 14),
-    deckPosition = {x = 1200, y = 50},
+    deckPosition = {x = 1400, y = 100},
     dealingAnimation = nil,
     maxHandSize = 5, -- Maximum number of cards in the player's hand
 }
@@ -37,6 +37,11 @@ function Game:initialize()
     self:initializeDecks()
     self:initializeWheelOfFate()
     self:drawHands()
+
+    self.deckImage = love.graphics.newImage("assets/cards/back_lq.png")
+    self.backMask = love.graphics.newImage("assets/cards/back_mask_lq.png")
+    self.goldShader = love.graphics.newShader("assets/shaders/gold.glsl")
+    self.goldShader:send("u_mask", self.backMask)
 end
 
 function Game:initializeDecks()
@@ -48,22 +53,22 @@ function Game:initializeDecks()
 
     -- Add resource cards to player's deck
     for _, cardData in ipairs(cards.resourceCards) do
-        table.insert(self.deck, Card:new("resource", cardData.name, cardData.effect))
+        table.insert(self.deck, Card:new("resource_lq", cardData.name, cardData.effect))
     end
 
     -- Add action cards to player's deck
     for _, cardData in ipairs(cards.actionCards) do
-        table.insert(self.deck, Card:new("action", cardData.name, cardData.effect))
+        table.insert(self.deck, Card:new("action_lq", cardData.name, cardData.effect))
     end
 
     -- Add gamble cards to player's deck
     for _, cardData in ipairs(cards.gambleCards) do
-        table.insert(self.deck, Card:new("gamble", cardData.name, cardData.effect))
+        table.insert(self.deck, Card:new("gamble_lq", cardData.name, cardData.effect))
     end
 
     -- Add dealer cards to dealer's deck
     for _, cardData in ipairs(cards.dealerCards) do
-        table.insert(self.dealerDeck, Card:new("dealer", cardData.name, cardData.effect))
+        table.insert(self.dealerDeck, Card:new("dealer_lq", cardData.name, cardData.effect))
     end
 
     self:shuffleDeck(self.deck)
@@ -127,32 +132,36 @@ function Game:update(dt)
     -- Update dealing animation
     if self.dealingAnimation then
         local card = self.dealingAnimation
-        card.animationProgress = card.animationProgress + dt * 2
+        card.animationProgress = card.animationProgress + dt * 2.5
         if card.animationProgress >= 1 then
             card.animationProgress = 1
             table.insert(self.playerHand, card)
             self.dealingAnimation = nil
         end
     end
+
+    -- Update shader uniforms
+    self.goldShader:send("u_time", love.timer.getTime())
+    self.goldShader:send("u_resolution", {love.graphics.getWidth(), love.graphics.getHeight()})
 end
 
 function Game:draw()
     love.graphics.clear(hexToRGB("#1A1B3A"))
     love.graphics.setColor(1, 1, 1)
-    love.graphics.setFont(love.graphics.newFont("assets/fonts/NotoSansBold.ttf", 20))
+    love.graphics.setFont(love.graphics.newFont("assets/fonts/EnchantedLand.otf", 36))
     love.graphics.print("Soul Essence: " .. self.soulEssence, 20, 20)
 
     -- Draw deck
-    love.graphics.setColor(0.5, 0.5, 0.5)
-    love.graphics.rectangle("fill", self.deckPosition.x, self.deckPosition.y, self.cardWidth, self.cardHeight)
-    love.graphics.setColor(1, 1, 1)
-    love.graphics.print("Deck", self.deckPosition.x + 10, self.deckPosition.y + 10)
+    love.graphics.setShader(self.goldShader)
+    love.graphics.draw(self.deckImage, self.deckPosition.x, self.deckPosition.y, 0, self.cardScale, self.cardScale)
+    love.graphics.setShader()
 
     -- Draw player's hand
     for i, card in ipairs(self.playerHand) do
         local cardX = self.playerStartX + (i - 1) * (self.cardWidth + self.cardSpacing)
         local cardY = self.playerStartY
         card:draw(cardX, cardY)
+        card:drawText(cardX, cardY)
     end
 
     -- Draw dealer's hand
@@ -168,13 +177,15 @@ function Game:draw()
         local x = card.x + (card.targetX - card.x) * card.animationProgress
         local y = card.y + (card.targetY - card.y) * card.animationProgress
         card:draw(x, y)
+        card:drawText(x, y)
     end
 
     -- Draw hovered card details
     if self.hoveredCard then
+        love.graphics.setColor(1, 1, 1)
         local font = self.hoverFont
         local padding = 10
-        local maxWidth = 500
+        local maxWidth = 300
 
         -- Split the effect text into multiple lines if it's too long
         local effectLines = {}
@@ -196,11 +207,11 @@ function Game:draw()
         -- Draw the hover box background
         love.graphics.setColor(0, 0, 0, 0.8)
         love.graphics.rectangle("fill", 10, 50, maxWidth + padding * 2, totalHeight)
-
-        -- Draw the card name
         love.graphics.setColor(1, 1, 1)
-        love.graphics.setFont(font)
-        love.graphics.print("Card: " .. self.hoveredCard.name, 10 + padding, 50 + padding)
+        -- Draw the card name
+        -- love.graphics.setColor(1, 1, 1)
+        -- love.graphics.setFont(font)
+        -- love.graphics.print("Card: " .. self.hoveredCard.name, 10 + padding, 50 + padding)
 
         -- Draw the effect lines
         love.graphics.print("Effect: " .. effectLines[1], 10 + padding, 50 + padding + lineHeight)
@@ -226,6 +237,15 @@ function Game:handleMousePress(x, y, button)
                 self:playCard(card)
             end
         end
+    end
+end
+
+function Game:optionsMenu()
+    local menu = require("states.menu")
+    local button = love.keyboard.isDown("escape")
+    if button == true then
+        print("Escape key pressed")
+        menu.state = "settings"
     end
 end
 
