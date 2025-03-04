@@ -1,4 +1,4 @@
--- scripts/game.lua
+-- core/game.lua
 
 Game = {
     state = "menu",
@@ -120,6 +120,13 @@ function Game:dealCard()
 end
 
 function Game:update(dt)
+    self:optionsMenu()
+    -- Update hover state for options menu buttons
+    if self.state == "settings" then
+        local mouseX, mouseY = love.mouse.getPosition()
+        self.optionsMenu:updateHoverState(mouseX, mouseY)
+    end
+    
     -- Update hovered card
     local mouseX, mouseY = love.mouse.getPosition()
     self.hoveredCard = nil
@@ -237,6 +244,10 @@ function Game:handleMousePress(x, y, button)
         -- Check if the deck was clicked
         if x >= self.deckPosition.x and x <= self.deckPosition.x + self.cardWidth and
            y >= self.deckPosition.y and y <= self.deckPosition.y + self.cardHeight then
+            if self.dealingAnimation then
+                return
+            end
+
             if #self.playerHand >= self.maxHandSize then
                 self.shakeDuration = 0.12
             else
@@ -256,11 +267,14 @@ function Game:handleMousePress(x, y, button)
 end
 
 function Game:optionsMenu()
-    local menu = require("states.menu")
-    local button = love.keyboard.isDown("escape")
-    if button == true then
-        print("Escape key pressed")
-        menu.state = "settings"
+    if love.keyboard.isDown("escape") then
+        if self.state == "playing" then
+            self.state = "settings"  -- Transition to the settings menu
+            print("Escape key pressed: Entering settings menu")
+        elseif self.state == "settings" then
+            self.state = "playing"  -- Return to the game
+            print("Escape key pressed: Returning to game")
+        end
     end
 end
 

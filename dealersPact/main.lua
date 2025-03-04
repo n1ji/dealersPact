@@ -8,7 +8,6 @@ function love.load()
     require("core.card")
     require("data.cards")
     require("utils")
-    require("ui.ui")
     require("ui.button")
 
     -- Initialize the menu
@@ -17,10 +16,8 @@ end
 
 function love.update(dt)
     if Game.state == "menu" then
-        -- Update menu logic if needed
-    elseif Game.state == "card_pack_selection" then
-        -- Update card pack selection logic if needed
-    else
+        Menu:update(dt)
+    elseif Game.state == "playing" or Game.state == "settings" then
         Game:update(dt)
     end
 end

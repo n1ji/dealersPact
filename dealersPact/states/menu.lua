@@ -1,4 +1,4 @@
--- scripts/menu.lua
+-- states/menu.lua
 
 Menu = {}
 
@@ -37,70 +37,54 @@ function Menu:initialize()
         Button:new("Quit", self.screenWidth / 2 - 100, buttonStartY + 2 * (50 + buttonGap), 200, 50, "quit", 20, 40)
     }
 
-    self.settingsButtons = {
-        Button:new("Music Volume +", self.screenWidth / 2 - 100, 200, self.titleFont:getWidth(self.titleText), 50, "musicUp", 20, 40),
-        Button:new("Music Volume -", self.screenWidth / 2 - 100, 250, self.titleFont:getWidth(self.titleText), 50, "musicDown", 20, 40),
-        Button:new("Effects Volume +", self.screenWidth / 2 - 100, 300, self.titleFont:getWidth(self.titleText), 50, "effectsUp", 20, 40),
-        Button:new("Effects Volume -", self.screenWidth / 2 - 100, 350, self.titleFont:getWidth(self.titleText), 50, "effectsDown", 20, 40),
-        Button:new("Mute Music", self.screenWidth / 2 - 100, 400, self.titleFont:getWidth(self.titleText), 50, "muteMusic", 20, 40),
-        Button:new("Back", self.screenWidth / 2 - 100, 400, 200, 50, "back", 20, 40)
-    }
+    -- Load the options menu
+    self.optionsMenu = require("states.options")
+    self.optionsMenu:initialize()
+    self.currentMenu = "main"
+end
 
-    self.state = "mainMenu"
+function Menu:update(dt)
+    -- Update hover state for options menu buttons
+    if self.currentMenu == "settings" then
+        local mouseX, mouseY = love.mouse.getPosition()
+        self.optionsMenu:updateHoverState(mouseX, mouseY)
+    end
 end
 
 function Menu:draw()
     love.graphics.clear(self.blue)
-    love.graphics.setFont(self.titleFont)
-    love.graphics.setColor(self.white)
-    love.graphics.print(self.titleText, self.titleX, self.titleY)
+    if self.currentMenu == "main" then
+        love.graphics.setFont(self.titleFont)
+        love.graphics.setColor(self.white)
+        love.graphics.print(self.titleText, self.titleX, self.titleY)
 
-    love.graphics.setFont(self.buttonFont)
-    for i, button in ipairs(self.mainMenuButtons) do
-        button:draw()
-    end
-    if self.state == "mainMenu" then
+        love.graphics.setFont(self.buttonFont)
         for i, button in ipairs(self.mainMenuButtons) do
             button:draw()
         end
-    elseif self.state == "settings" then
-        for i, button in ipairs(self.settingsButtons) do
-            button:draw()
-        end
+    elseif self.currentMenu == "settings" then
+        self.optionsMenu:draw()
     end
 end
 
 function Menu:handleMousePress(x, y, button)
-    if self.state == "mainMenu" then
+    if self.currentMenu == "main" then
         for i, btn in ipairs(self.mainMenuButtons) do
             if btn:isHovered(x, y) then
                 if btn.action == "play" then
                     Game.state = "playing"
                     Game:initialize()
                 elseif btn.action == "settings" then
-                    self.state = "settings"
+                    self.currentMenu = "settings"
                 elseif btn.action == "quit" then
                     love.event.quit()
                 end
             end
         end
-    elseif self.state == "settings" then
-        for i, btn in ipairs(self.settingsButtons) do
-            if btn:isHovered(x, y) then
-                if btn.action == "musicUp" then
-                    love.audio.setVolume(love.audio.getVolume() + 0.1)
-                elseif btn.action == "musicDown" then
-                    love.audio.setVolume(love.audio.getVolume() - 0.1)
-                elseif btn.action == "effectsUp" then
-                    -- Increase effects volume
-                elseif btn.action == "effectsDown" then
-                    -- Decrease effects volume
-                elseif btn.action == "muteMusic" then
-                    love.audio.setVolume(0)
-                elseif btn.action == "back" then
-                    self.state = "mainMenu"
-                end
-            end
+    elseif self.currentMenu == "settings" then
+        local result = self.optionsMenu:handleMousePress(x, y)
+        if result == "return" then
+            self.currentMenu = "main"  -- Return to the main menu
         end
     end
 end

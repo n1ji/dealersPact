@@ -1,4 +1,4 @@
--- scripts/card.lua
+-- core/card.lua
 
 Card = {}
 
