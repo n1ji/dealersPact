@@ -40,6 +40,13 @@ function Card:drawText(x, y)
     local typeFont = love.graphics.newFont("assets/fonts/EnchantedLand.otf", 28)
     love.graphics.setFont(typeFont)
     local typeText = self.type
+    if self.type == "resource_lq" then
+        typeText = "Resource"
+    elseif self.type == "action_lq" then
+        typeText = "Action"
+    else
+        typeText = "Gamble"
+    end
     local typeTextWidth = typeFont:getWidth(typeText)
     local typeX = x + (self.image:getWidth() * Game.cardScale - typeTextWidth) / 2 -- Calculate the x position to center the text horizontally
     love.graphics.print(typeText, typeX, y + 22)

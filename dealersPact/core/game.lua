@@ -21,6 +21,9 @@ Game = {
     deckPosition = {x = 1400, y = 100},
     dealingAnimation = nil,
     maxHandSize = 5, -- Maximum number of cards in the player's hand
+    shakeDuration = 0,
+    shakeIntensity = 5,
+    shakeOffset = {x = 0, y = 0}
 }
 
 function Game:indexOf(table, element)
@@ -139,6 +142,16 @@ function Game:update(dt)
             self.dealingAnimation = nil
         end
     end
+    
+    -- Shake Animation
+    if self.shakeDuration > 0 then
+        self.shakeDuration = self.shakeDuration - dt
+        self.shakeOffset.x = (math.random() - 0.5) * 2 * self.shakeIntensity
+        self.shakeOffset.y = (math.random() - 0.5) * 2 * self.shakeIntensity
+    else
+        self.shakeOffset.x = 0
+        self.shakeOffset.y = 0
+    end
 
     -- Update shader uniforms
     self.goldShader:send("u_time", love.timer.getTime())
@@ -185,7 +198,8 @@ function Game:draw()
         love.graphics.setColor(1, 1, 1)
         local font = self.hoverFont
         local padding = 10
-        local maxWidth = 300
+        local maxWidth = 290
+        local maxBoxWidth = 320
 
         -- Split the effect text into multiple lines if it's too long
         local effectLines = {}
@@ -206,17 +220,14 @@ function Game:draw()
 
         -- Draw the hover box background
         love.graphics.setColor(0, 0, 0, 0.8)
-        love.graphics.rectangle("fill", 10, 50, maxWidth + padding * 2, totalHeight)
+        love.graphics.rectangle("fill", 10, 100, maxBoxWidth + 20 * 2, totalHeight - 15)
         love.graphics.setColor(1, 1, 1)
-        -- Draw the card name
-        -- love.graphics.setColor(1, 1, 1)
-        -- love.graphics.setFont(font)
-        -- love.graphics.print("Card: " .. self.hoveredCard.name, 10 + padding, 50 + padding)
 
         -- Draw the effect lines
-        love.graphics.print("Effect: " .. effectLines[1], 10 + padding, 50 + padding + lineHeight)
+        love.graphics.setFont(font)
+        love.graphics.print("Effect: " .. effectLines[1], 10 + padding, 100 + padding)
         for i = 2, #effectLines do
-            love.graphics.print(effectLines[i], 10 + padding, 50 + padding + lineHeight * (i + 1))
+            love.graphics.print(effectLines[i], 10 + padding, 100 + padding * (i + 1))
         end
     end
 end
@@ -226,7 +237,11 @@ function Game:handleMousePress(x, y, button)
         -- Check if the deck was clicked
         if x >= self.deckPosition.x and x <= self.deckPosition.x + self.cardWidth and
            y >= self.deckPosition.y and y <= self.deckPosition.y + self.cardHeight then
-            self:dealCard()
+            if #self.playerHand >= self.maxHandSize then
+                self.shakeDuration = 0.2
+            else
+                self:dealCard()
+            end
         end
 
         -- Check if a card in the player's hand was clicked
