@@ -20,8 +20,9 @@ function Menu:initialize()
     self.titleFont = love.graphics.newFont("assets/fonts/EnchantedLand.otf", 74)
     self.buttonFont = love.graphics.newFont("assets/fonts/EnchantedLand.otf", 50)
 
-    self.music = love.audio.newSource("assets/sounds/bgm.mp3", "stream")
-    love.audio.setVolume(0.03)
+    self.music = love.audio.newSource("assets/sounds/mainMenu.mp3", "stream")
+    self.music:setVolume(Game.musicVolume)
+    self.music:setLooping(true)
     love.audio.play(self.music)
 
     self.titleText = "The Dealer's Pact"

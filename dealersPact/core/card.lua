@@ -7,10 +7,11 @@ function Card:new(type, name, effect)
         type = type,
         name = name,
         effect = effect,
-        sound = love.audio.newSource("assets/sounds/card.ogg", "static"),
+        sound = love.audio.newSource("assets/sounds/card.mp3", "static"),
         image = love.graphics.newImage("assets/cards/" .. type .. ".png"),
         flipped = false
     }
+    card.sound:setVolume(Game.effectVolume)
     setmetatable(card, self)
     self.__index = self
     return card

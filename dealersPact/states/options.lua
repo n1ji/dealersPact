@@ -1,6 +1,9 @@
 local Button = require("ui.button")
 
-OptionsMenu = {}
+OptionsMenu = {
+    musicVolume = Game.musicVolume,
+    effectVolume = Game.effectVolume
+}
 
 function OptionsMenu:initialize()
     self.font = love.graphics.newFont("assets/fonts/EnchantedLand.otf", 36)
@@ -39,19 +42,18 @@ function OptionsMenu:handleMousePress(x, y)
     for i, button in ipairs(self.settingsButtons) do
         if button:isHovered(x, y) then
             if button.action == "musicUp" then
-                love.audio.setVolume(love.audio.getVolume() + 0.02)
-                -- Handle music volume increase
-                print("Music Volume + clicked")
+                Game.musicVolume = self.musicVolume + 0.05
+                self.music:setVolume(Game.musicVolume) -- Update music volume
+                
+                --love.audio.setVolume(love.audio.getVolume + 0.1)
+                print("VolY " .. tostring(self.musicVolume))
             elseif button.action == "musicDown" then
-                love.audio.setVolume(love.audio.getVolume() - 0.02)
-                -- Handle music volume decrease
-                print("Music Volume - clicked")
+                Game.music:setVolume(Game.musicVolume - 0.05) -- Update music volume
+                print("VolY " .. tostring(self.musicVolume))
             elseif button.action == "effectsUp" then
-                -- Handle effects volume increase
-                print("Effects Volume + clicked")
+                print("VolY " .. tostring(self.effectVolume))
             elseif button.action == "effectsDown" then
-                -- Handle effects volume decrease
-                print("Effects Volume - clicked")
+                print("VolY " .. tostring(self.effectVolume))
             elseif button.action == "muteMusic" then
                 love.audio.setVolume(0)
                 -- Handle mute music

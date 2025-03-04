@@ -26,7 +26,9 @@ Game = {
     shakeOffset = {x = 0, y = 0},
     wheel = nil,
     screenWidth = love.graphics.getWidth(),
-    screenHeight = love.graphics.getHeight()
+    screenHeight = love.graphics.getHeight(),
+    musicVolume = 0.03,
+    effectVolume = 0.5
 }
 
 function Game:indexOf(table, element)
