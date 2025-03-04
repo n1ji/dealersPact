@@ -39,37 +39,22 @@ function Card:draw(x, y, shader)
 end
 
 function Card:drawText(x, y)
-    -- Set the color for the text
     love.graphics.setColor(0, 0, 0)
 
-    -- Set the font for the card type
+    -- Card type text
     local typeFont = love.graphics.newFont("assets/fonts/EnchantedLand.otf", 28)
     love.graphics.setFont(typeFont)
-
-    -- Calculate the width of the type text
     local typeText = self.type
     local typeTextWidth = typeFont:getWidth(typeText)
-
-    -- Calculate the x position to center the type text horizontally
-    local typeX = x + (self.image:getWidth() * Game.cardScale - typeTextWidth) / 2
-
-    -- Draw the type text
+    local typeX = x + (self.image:getWidth() * Game.cardScale - typeTextWidth) / 2 -- Calculate the x position to center the text horizontally
     love.graphics.print(typeText, typeX, y + 22)
 
-    -- Set the font for the card name
+    -- Card name text
     local nameFont = love.graphics.newFont("assets/fonts/EnchantedLand.otf", 24)
     love.graphics.setFont(nameFont)
-
-    -- Calculate the width of the name text
     local nameText = self.name
     local nameTextWidth = nameFont:getWidth(nameText)
-
-    -- Calculate the x position to center the name text horizontally
     local nameX = x + (self.image:getWidth() * Game.cardScale - nameTextWidth) / 2
-
-    -- Draw the name text
     love.graphics.print(nameText, nameX, y + 190)
-
-    -- Reset the color to white
     love.graphics.setColor(1, 1, 1)
 end
