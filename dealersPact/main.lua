@@ -3,13 +3,13 @@
 function love.load()
     love.window.setIcon(love.image.newImageData("assets/icon.png"))
     -- Load scripts
-    require("scripts.game")
-    require("scripts.card")
-    require("scripts.button")
-    require("scripts.menu")
-    require("scripts.utils")
-    require("scripts.cards")
-    require("scripts.ui")
+    require("states.menu")
+    require("core.game")
+    require("core.card")
+    require("data.cards")
+    require("utils")
+    require("ui.ui")
+    require("ui.button")
 
     -- Initialize the menu
     Menu:initialize()
