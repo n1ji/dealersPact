@@ -8,7 +8,7 @@ Game = {
     dealerHand = {},
     soulEssence = 100,
     wheelOfFate = {},
-    cardScale = 0.3,
+    cardScale = 0.15,
     cardSpacing = 20,
     dealerStartX = 450,
     dealerStartY = 350,
@@ -137,7 +137,7 @@ function Game:update(dt)
 end
 
 function Game:draw()
-    love.graphics.clear(hexToRGB("#A77464"))
+    love.graphics.clear(hexToRGB("#1A1B3A"))
     love.graphics.setColor(1, 1, 1)
     love.graphics.setFont(love.graphics.newFont("fonts/NotoSansBold.ttf", 20))
     love.graphics.print("Soul Essence: " .. self.soulEssence, 20, 20)
