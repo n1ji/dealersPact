@@ -39,9 +39,11 @@ function OptionsMenu:handleMousePress(x, y)
     for i, button in ipairs(self.settingsButtons) do
         if button:isHovered(x, y) then
             if button.action == "musicUp" then
+                love.audio.setVolume(love.audio.getVolume() + 0.02)
                 -- Handle music volume increase
                 print("Music Volume + clicked")
             elseif button.action == "musicDown" then
+                love.audio.setVolume(love.audio.getVolume() - 0.02)
                 -- Handle music volume decrease
                 print("Music Volume - clicked")
             elseif button.action == "effectsUp" then
@@ -51,6 +53,7 @@ function OptionsMenu:handleMousePress(x, y)
                 -- Handle effects volume decrease
                 print("Effects Volume - clicked")
             elseif button.action == "muteMusic" then
+                love.audio.setVolume(0)
                 -- Handle mute music
                 print("Mute Music clicked")
             elseif button.action == "back" then

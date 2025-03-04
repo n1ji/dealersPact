@@ -23,7 +23,10 @@ Game = {
     maxHandSize = 5, -- Maximum number of cards in the player's hand
     shakeDuration = 0,
     shakeIntensity = 1.6,
-    shakeOffset = {x = 0, y = 0}
+    shakeOffset = {x = 0, y = 0},
+    wheel = nil,
+    screenWidth = love.graphics.getWidth(),
+    screenHeight = love.graphics.getHeight()
 }
 
 function Game:indexOf(table, element)
@@ -45,6 +48,12 @@ function Game:initialize()
     self.backMask = love.graphics.newImage("assets/cards/back_mask_lq.png")
     self.goldShader = love.graphics.newShader("assets/shaders/gold.glsl")
     self.goldShader:send("u_mask", self.backMask)
+
+    self.optionsMenu = require("states.options")
+    self.optionsMenu:initialize()
+
+    -- self.wheel = require("core.wheel")
+    -- self.wheel:initialize(self.screenWidth, self.screenHeight)
 end
 
 function Game:initializeDecks()
@@ -83,6 +92,54 @@ function Game:initializeWheelOfFate()
     self.wheelOfFate = cards.wheelOfFate
 end
 
+function Game:update(dt)
+    -- Update hover state for options menu buttons
+    if self.state == "settings" then
+        local mouseX, mouseY = love.mouse.getPosition()
+        self.optionsMenu:updateHoverState(mouseX, mouseY)
+    end
+
+    -- Update hovered card
+    local mouseX, mouseY = love.mouse.getPosition()
+    self.hoveredCard = nil
+    for i, card in ipairs(self.playerHand) do
+        local cardX = self.playerStartX + (i - 1) * (self.cardWidth + self.cardSpacing)
+        local cardY = self.playerStartY
+        if mouseX >= cardX and mouseX <= cardX + self.cardWidth and
+           mouseY >= cardY and mouseY <= cardY + self.cardHeight then
+            self.hoveredCard = card
+        end
+    end
+
+    -- Update dealing animation
+    if self.dealingAnimation then
+        local card = self.dealingAnimation
+        card.animationProgress = card.animationProgress + dt * 2.5
+        if card.animationProgress >= 1 then
+            card.animationProgress = 1
+            table.insert(self.playerHand, card)
+            self.dealingAnimation = nil
+        end
+    end
+
+    -- Shake Animation
+    if self.shakeDuration > 0 then
+        self.shakeDuration = self.shakeDuration - dt
+        self.shakeOffset.x = (math.random() - 0.5) * 2 * self.shakeIntensity
+        self.shakeOffset.y = (math.random() - 0.5) * 2 * self.shakeIntensity
+    else
+        self.shakeOffset.x = 0
+        self.shakeOffset.y = 0
+    end
+
+    -- Update shader uniforms
+    self.goldShader:send("u_time", love.timer.getTime())
+    self.goldShader:send("u_resolution", {love.graphics.getWidth(), love.graphics.getHeight()})
+
+    -- Update the wheel
+    --self.wheel:update(dt)
+end
+
 function Game:shuffleDeck(deck)
     for i = #deck, 2, -1 do
         local j = math.random(i)
@@ -117,52 +174,6 @@ function Game:dealCard()
     else
         print("No more cards in the deck!")
     end
-end
-
-function Game:update(dt)
-    self:optionsMenu()
-    -- Update hover state for options menu buttons
-    if self.state == "settings" then
-        local mouseX, mouseY = love.mouse.getPosition()
-        self.optionsMenu:updateHoverState(mouseX, mouseY)
-    end
-    
-    -- Update hovered card
-    local mouseX, mouseY = love.mouse.getPosition()
-    self.hoveredCard = nil
-    for i, card in ipairs(self.playerHand) do
-        local cardX = self.playerStartX + (i - 1) * (self.cardWidth + self.cardSpacing)
-        local cardY = self.playerStartY
-        if mouseX >= cardX and mouseX <= cardX + self.cardWidth and
-           mouseY >= cardY and mouseY <= cardY + self.cardHeight then
-            self.hoveredCard = card
-        end
-    end
-
-    -- Update dealing animation
-    if self.dealingAnimation then
-        local card = self.dealingAnimation
-        card.animationProgress = card.animationProgress + dt * 2.5
-        if card.animationProgress >= 1 then
-            card.animationProgress = 1
-            table.insert(self.playerHand, card)
-            self.dealingAnimation = nil
-        end
-    end
-    
-    -- Shake Animation
-    if self.shakeDuration > 0 then
-        self.shakeDuration = self.shakeDuration - dt
-        self.shakeOffset.x = (math.random() - 0.5) * 2 * self.shakeIntensity
-        self.shakeOffset.y = (math.random() - 0.5) * 2 * self.shakeIntensity
-    else
-        self.shakeOffset.x = 0
-        self.shakeOffset.y = 0
-    end
-
-    -- Update shader uniforms
-    self.goldShader:send("u_time", love.timer.getTime())
-    self.goldShader:send("u_resolution", {love.graphics.getWidth(), love.graphics.getHeight()})
 end
 
 function Game:draw()
@@ -237,6 +248,8 @@ function Game:draw()
             love.graphics.print(effectLines[i], 10 + padding, 100 + padding * (i + 1))
         end
     end
+
+--    self.wheel:draw()
 end
 
 function Game:handleMousePress(x, y, button)
@@ -263,18 +276,8 @@ function Game:handleMousePress(x, y, button)
                 self:playCard(card)
             end
         end
-    end
-end
 
-function Game:optionsMenu()
-    if love.keyboard.isDown("escape") then
-        if self.state == "playing" then
-            self.state = "settings"  -- Transition to the settings menu
-            print("Escape key pressed: Entering settings menu")
-        elseif self.state == "settings" then
-            self.state = "playing"  -- Return to the game
-            print("Escape key pressed: Returning to game")
-        end
+        --self.wheel:handleMousePress(x, y)
     end
 end
 
@@ -324,8 +327,7 @@ function Game:spinWheelOfFate()
     print("Wheel of Fate: " .. effect.name)
 end
 
-function Game:start(cardPack)
-    self.cardPack = cardPack
+function Game:start()
     self.state = "playing"
     self:initialize()
 
