@@ -28,10 +28,13 @@ function Menu:initialize()
     self.titleX = self.screenWidth / 2 - self.titleFont:getWidth(self.titleText) / 2
     self.titleY = 100
 
+    local buttonGap = 30
+    local buttonStartY = 250
+
     self.mainMenuButtons = {
-        Button:new("Play", self.screenWidth / 2 - 100, 200, 200, 50, "play", 20, 40),
-        Button:new("Settings", self.screenWidth / 2 - 100, 250, 200, 50, "settings", 20, 40),
-        Button:new("Quit", self.screenWidth / 2 - 100, 300, 200, 50, "quit", 20, 40)
+        Button:new("Play", self.screenWidth / 2 - 100, buttonStartY, 200, 50, "play", 20, 40),
+        Button:new("Settings", self.screenWidth / 2 - 100, buttonStartY + 50 + buttonGap, 200, 50, "settings", 20, 40),
+        Button:new("Quit", self.screenWidth / 2 - 100, buttonStartY + 2 * (50 + buttonGap), 200, 50, "quit", 20, 40)
     }
 
     self.settingsButtons = {
@@ -49,7 +52,7 @@ end
 function Menu:draw()
     love.graphics.clear(self.blue)
     love.graphics.setFont(self.titleFont)
-    love.graphics.setColor(self.black)
+    love.graphics.setColor(self.white)
     love.graphics.print(self.titleText, self.titleX, self.titleY)
 
     love.graphics.setFont(self.buttonFont)
