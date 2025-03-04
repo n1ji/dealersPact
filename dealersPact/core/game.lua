@@ -22,7 +22,7 @@ Game = {
     dealingAnimation = nil,
     maxHandSize = 5, -- Maximum number of cards in the player's hand
     shakeDuration = 0,
-    shakeIntensity = 5,
+    shakeIntensity = 1.6,
     shakeOffset = {x = 0, y = 0}
 }
 
@@ -166,7 +166,7 @@ function Game:draw()
 
     -- Draw deck
     love.graphics.setShader(self.goldShader)
-    love.graphics.draw(self.deckImage, self.deckPosition.x, self.deckPosition.y, 0, self.cardScale, self.cardScale)
+    love.graphics.draw(self.deckImage, self.deckPosition.x + self.shakeOffset.x, self.deckPosition.y + self.shakeOffset.y, 0, self.cardScale, self.cardScale)
     love.graphics.setShader()
 
     -- Draw player's hand
@@ -238,7 +238,7 @@ function Game:handleMousePress(x, y, button)
         if x >= self.deckPosition.x and x <= self.deckPosition.x + self.cardWidth and
            y >= self.deckPosition.y and y <= self.deckPosition.y + self.cardHeight then
             if #self.playerHand >= self.maxHandSize then
-                self.shakeDuration = 0.2
+                self.shakeDuration = 0.12
             else
                 self:dealCard()
             end
