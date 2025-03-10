@@ -5,7 +5,8 @@ OptionsMenu = {
     effectVolume = Game.effectVolume
 }
 
-function OptionsMenu:initialize()
+function OptionsMenu:initialize(music)
+    self.music = music
     self.font = love.graphics.newFont("assets/fonts/EnchantedLand.otf", 36)
     self.buttonFont = love.graphics.newFont("assets/fonts/EnchantedLand.otf", 24)
     self.screenWidth = love.graphics.getWidth()
@@ -42,20 +43,19 @@ function OptionsMenu:handleMousePress(x, y)
     for i, button in ipairs(self.settingsButtons) do
         if button:isHovered(x, y) then
             if button.action == "musicUp" then
-                Game.musicVolume = self.musicVolume + 0.05
-                self.music:setVolume(Game.musicVolume) -- Update music volume
-                
-                --love.audio.setVolume(love.audio.getVolume + 0.1)
-                print("VolY " .. tostring(self.musicVolume))
+                Game.musicVolume = math.min(Game.musicVolume + 0.05, 1.0)
+                self.music:setVolume(Game.musicVolume)
+                print("Vol: " .. tostring(Game.musicVolume))
             elseif button.action == "musicDown" then
-                Game.music:setVolume(Game.musicVolume - 0.05) -- Update music volume
-                print("VolY " .. tostring(self.musicVolume))
+                Game.musicVolume = math.max(Game.musicVolume - 0.05, 0.0)
+                self.music:setVolume(Game.musicVolume) -- Update music volume
+                print("Vol: " .. tostring(Game.musicVolume))
             elseif button.action == "effectsUp" then
-                print("VolY " .. tostring(self.effectVolume))
+                print("VolY " .. tostring(Game.effectVolume))
             elseif button.action == "effectsDown" then
-                print("VolY " .. tostring(self.effectVolume))
+                print("VolY " .. tostring(Game.effectVolume))
             elseif button.action == "muteMusic" then
-                love.audio.setVolume(0)
+                self.music:setVolume(0)
                 -- Handle mute music
                 print("Mute Music clicked")
             elseif button.action == "back" then

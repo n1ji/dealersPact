@@ -41,7 +41,7 @@ function Menu:initialize()
 
     -- Load the options menu
     self.optionsMenu = require("states.options")
-    self.optionsMenu:initialize()
+    self.optionsMenu:initialize(self.music)
     self.currentMenu = "main"
 end
 
