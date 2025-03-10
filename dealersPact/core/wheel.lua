@@ -14,7 +14,7 @@ Wheel = {
 function Wheel:initialize(screenWidth, screenHeight)
     self.screenWidth = screenWidth
     self.screenHeight = screenHeight
-    self.wheelImage = love.graphics.newImage("assets/wheel.png")
+    self.wheelImage = love.graphics.newImage("assets/wheel.jpeg")
     self.spinButton = {
         x = Game.screenWidth / 2 - 50,
         y = Game.screenHeight - 100,
@@ -26,7 +26,7 @@ end
 
 function Wheel:draw()
     if self.spinning then
-        local angle = self.spinProgress * 2 * math.pi
+        local angle = self.spinProgress * 4 * math.pi
         love.graphics.draw(self.wheelImage, self.screenWidth / 2, self.screenHeight / 2, angle, 1, 1, self.wheelImage:getWidth() / 2, self.wheelImage:getHeight() / 2)
     else
         love.graphics.draw(self.wheelImage, self.screenWidth / 2, self.screenHeight / 2, 0, 1, 1, self.wheelImage:getWidth() / 2, self.wheelImage:getHeight() / 2)

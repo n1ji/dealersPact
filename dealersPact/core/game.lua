@@ -54,8 +54,8 @@ function Game:initialize()
     self.optionsMenu = require("states.options")
     self.optionsMenu:initialize()
 
-    -- self.wheel = require("core.wheel")
-    -- self.wheel:initialize(self.screenWidth, self.screenHeight)
+    self.wheel = require("core.wheel")
+    self.wheel:initialize(self.screenWidth, self.screenHeight)
 end
 
 function Game:initializeDecks()
@@ -116,7 +116,7 @@ function Game:update(dt)
     -- Update dealing animation
     if self.dealingAnimation then
         local card = self.dealingAnimation
-        card.animationProgress = card.animationProgress + dt * 2.5
+        card.animationProgress = card.animationProgress + dt * 5 -- Deal speed
         if card.animationProgress >= 1 then
             card.animationProgress = 1
             table.insert(self.playerHand, card)
@@ -139,7 +139,7 @@ function Game:update(dt)
     self.goldShader:send("u_resolution", {love.graphics.getWidth(), love.graphics.getHeight()})
 
     -- Update the wheel
-    --self.wheel:update(dt)
+    self.wheel:update(dt)
 end
 
 function Game:shuffleDeck(deck)
@@ -251,7 +251,7 @@ function Game:draw()
         end
     end
 
---    self.wheel:draw()
+    self.wheel:draw()
 end
 
 function Game:handleMousePress(x, y, button)
@@ -279,7 +279,7 @@ function Game:handleMousePress(x, y, button)
             end
         end
 
-        --self.wheel:handleMousePress(x, y)
+        self.wheel:handleMousePress(x, y)
     end
 end
 
