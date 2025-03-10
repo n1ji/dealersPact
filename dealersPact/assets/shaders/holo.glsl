@@ -2,8 +2,9 @@
 precision mediump float;
 #endif
 
-uniform float u_time;
+uniform float u_time;  // Time variable for animation
 uniform vec2 u_resolution;
+uniform sampler2D u_mask;  // Mask texture
 
 // Utility function to convert HSV to RGB
 vec3 hsv2rgb(vec3 c) {
@@ -65,9 +66,14 @@ vec4 effect(vec4 color, Image texture, vec2 texture_coords, vec2 screen_coords) 
     // Get the pastel rainbow holographic color
     vec3 hologram = pastelRainbow(n);
 
-    // Mix with the texture color
+    // Sample the texture color
     vec4 texColor = Texel(texture, texture_coords);
-    vec3 finalColor = mix(texColor.rgb, hologram, 0.5);
+
+    // Sample the mask texture
+    float mask = Texel(u_mask, texture_coords).r;
+
+    // Mix with the texture color, applying the holographic effect only where the mask is white
+    vec3 finalColor = mix(texColor.rgb, hologram, mask * 0.5);  // Adjust the multiplier for intensity
 
     return vec4(finalColor, texColor.a);
 }

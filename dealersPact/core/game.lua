@@ -46,11 +46,23 @@ function Game:initialize()
     self:initializeWheelOfFate()
     self:drawHands()
 
+    -- Load the deck and mask textures
     self.deckImage = love.graphics.newImage("assets/cards/back_lq.png")
     self.backMask = love.graphics.newImage("assets/cards/back_mask_lq.png")
+    
+    -- Load the gold shader
     self.goldShader = love.graphics.newShader("assets/shaders/gold.glsl")
+
+    -- Send the mask texture to the shader
     self.goldShader:send("u_mask", self.backMask)
 
+    -- Load other shaders (holo and rainbow)
+    self.holoShader = love.graphics.newShader("assets/shaders/holo.glsl")
+    self.holoShader:send("u_mask", self.backMask)
+    self.rainbowShader = love.graphics.newShader("assets/shaders/rainbow.glsl")
+    self.rainbowShader:send("u_mask", self.backMask)
+
+    -- Initialize the options menu
     self.optionsMenu = require("states.options")
     self.optionsMenu:initialize()
 
@@ -116,7 +128,7 @@ function Game:update(dt)
     -- Update dealing animation
     if self.dealingAnimation then
         local card = self.dealingAnimation
-        card.animationProgress = card.animationProgress + dt * 2.5
+        card.animationProgress = card.animationProgress + dt * 5 -- Draw speed
         if card.animationProgress >= 1 then
             card.animationProgress = 1
             table.insert(self.playerHand, card)
@@ -134,9 +146,22 @@ function Game:update(dt)
         self.shakeOffset.y = 0
     end
 
-    -- Update shader uniforms
+    -- Normalize the cursor position to [0, 1] range
+    local cursorX = mouseX / love.graphics.getWidth()
+    local cursorY = mouseY / love.graphics.getHeight()
+
+    -- Update gold shader uniforms
     self.goldShader:send("u_time", love.timer.getTime())
     self.goldShader:send("u_resolution", {love.graphics.getWidth(), love.graphics.getHeight()})
+    self.goldShader:send("u_cursor", {cursorX, cursorY})  -- Pass cursor position to the shader
+
+    -- -- Update holo shader uniforms
+    -- self.holoShader:send("u_time", love.timer.getTime())
+    -- self.holoShader:send("u_resolution", {love.graphics.getWidth(), love.graphics.getHeight()})
+
+    -- -- Update rainbow shader uniforms
+    -- self.rainbowShader:send("time", love.timer.getTime())
+    -- self.rainbowShader:send("u_resolution", {love.graphics.getWidth(), love.graphics.getHeight()})
 
     -- Update the wheel
     --self.wheel:update(dt)
@@ -184,7 +209,7 @@ function Game:draw()
     love.graphics.setFont(love.graphics.newFont("assets/fonts/EnchantedLand.otf", 36))
     love.graphics.print("Soul Essence: " .. self.soulEssence, 20, 20)
 
-    -- Draw deck
+    -- Draw deck with the rainbow shader
     love.graphics.setShader(self.goldShader)
     love.graphics.draw(self.deckImage, self.deckPosition.x + self.shakeOffset.x, self.deckPosition.y + self.shakeOffset.y, 0, self.cardScale, self.cardScale)
     love.graphics.setShader()
@@ -250,7 +275,6 @@ function Game:draw()
             love.graphics.print(effectLines[i], 10 + padding, 100 + padding * (i + 1))
         end
     end
-
 --    self.wheel:draw()
 end
 

@@ -4,7 +4,8 @@ precision mediump float;
 
 uniform float u_time;
 uniform vec2 u_resolution;
-uniform Image u_mask;
+uniform sampler2D u_mask;  // Mask texture
+uniform vec2 u_cursor;     // Cursor position in [0, 1] range
 
 // Random number generator
 vec2 random2(vec2 p) {
@@ -35,35 +36,59 @@ float fbm(vec2 p) {
     return value;
 }
 
-// Gold color palette
-vec3 goldColor(float n) {
-    // Warm golden hues with dynamic highlights
-    float highlight = smoothstep(0.3, 0.7, sin(n * 6.28318 + u_time * 2.0));
-    vec3 baseColor = vec3(0.85, 0.65, 0.3);  // Base gold color
-    vec3 lightColor = vec3(1.0, 0.85, 0.6);  // Shiny highlight color
+// Procedural normal generation
+vec3 proceduralNormal(vec2 uv) {
+    // Add cursor-based parallax effect
+    vec2 parallaxOffset = u_cursor * 0.5;  // Adjust the multiplier for parallax strength
+    float noise = fbm(uv * 4.0 + u_time * 0.6 + parallaxOffset);
+    return normalize(vec3(noise, noise, 1.0));  // Create a normal vector
+}
 
-    // Mix base and highlight for metallic reflection
-    return mix(baseColor, lightColor, highlight);
+// Simulate a reflective gold surface
+vec3 goldReflection(vec2 uv, vec3 normal, vec3 viewDir) {
+    // Base gold color
+    vec3 baseColor = vec3(0.85, 0.65, 0.3);
+
+    // Light direction (simulate a light source)
+    vec3 lightDir = normalize(vec3(1.0, 0.5, 1.0));  // Adjusted light direction
+
+    // Diffuse lighting
+    float diffuse = max(dot(normal, lightDir), 0.0);
+
+    // Specular highlight (Blinn-Phong model)
+    vec3 halfDir = normalize(lightDir + viewDir);
+    float specular = pow(max(dot(normal, halfDir), 0.0), 16.0);  // Adjusted specular power
+
+    // Ambient light
+    vec3 ambient = vec3(0.2);  // Add ambient light
+
+    // Combine base color, diffuse, ambient, and specular
+    vec3 finalColor = baseColor * (diffuse + ambient) + vec3(1.0) * specular;
+
+    return finalColor;
 }
 
 vec4 effect(vec4 color, Image texture, vec2 texture_coords, vec2 screen_coords) {
     vec2 uv = texture_coords;
     uv.x *= u_resolution.x / u_resolution.y;
 
-    // Noise animation independent of UV
-    float noisePattern = fbm(uv * 6.0 + vec2(u_time * 0.3, u_time * 0.35));
+    // Generate a procedural normal vector
+    vec3 normal = proceduralNormal(uv);
 
-    // Apply the gold color palette
-    vec3 gold = goldColor(noisePattern);
+    // View direction (simulate camera looking at the surface)
+    vec3 viewDir = vec3(0.0, 0.0, 1.0);
 
-    // Sample the card texture
+    // Calculate the gold reflection
+    vec3 gold = goldReflection(uv, normal, viewDir);
+
+    // Sample the texture color
     vec4 texColor = Texel(texture, texture_coords);
 
     // Sample the mask texture
     float mask = Texel(u_mask, texture_coords).r;
 
-    // Apply the gold effect only where the mask is white
-    vec3 finalColor = mix(texColor.rgb, gold, mask * 0.7);
+    // Mix with the texture color, applying the gold effect only where the mask is white
+    vec3 finalColor = mix(texColor.rgb, gold, mask * 0.7);  // Adjust the multiplier for intensity
 
     return vec4(finalColor, texColor.a);
 }

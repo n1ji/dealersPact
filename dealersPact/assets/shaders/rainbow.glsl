@@ -1,9 +1,17 @@
-// holographic.glsl (Fragment Shader)
-extern float time;  // Time variable for animation
+#ifdef GL_ES
+precision mediump float;
+#endif
+
+uniform float time;  // Time variable for animation
+uniform vec2 u_resolution;
+uniform sampler2D u_mask;  // Mask texture
 
 vec4 effect(vec4 color, Image texture, vec2 texture_coords, vec2 screen_coords) {
     // Sample the card back texture
     vec4 texColor = Texel(texture, texture_coords);
+
+    // Sample the mask texture
+    float mask = Texel(u_mask, texture_coords).r;
 
     // Create a holographic effect using color shifting and distortion
     float shift = sin(texture_coords.y * 10.0 + time * 5.0) * 0.1;  // Vertical distortion
@@ -21,7 +29,7 @@ vec4 effect(vec4 color, Image texture, vec2 texture_coords, vec2 screen_coords) 
     );
 
     // Blend the holographic effect with the original texture
-    vec4 finalColor = mix(texColor, vec4(rainbowColor, texColor.a), 0.5);
+    vec3 finalColor = mix(texColor.rgb, rainbowColor, mask * 0.5);  // Apply only where the mask is white
 
-    return finalColor;
+    return vec4(finalColor, texColor.a);
 }
