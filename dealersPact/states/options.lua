@@ -30,7 +30,7 @@ function OptionsMenu:draw()
     -- Draw the title
     love.graphics.setColor(1, 1, 1)
     love.graphics.setFont(self.font)
-    love.graphics.print("Settings", self.screenWidth / 2 - 70, 100)
+    love.graphics.print("Settings", self.screenWidth / 2 - 40, 100)
 
     -- Draw buttons
     for i, button in ipairs(self.settingsButtons) do
