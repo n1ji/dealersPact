@@ -27,7 +27,7 @@ Game = {
     wheel = nil,
     screenWidth = love.graphics.getWidth(),
     screenHeight = love.graphics.getHeight(),
-    musicVolume = 0.03,
+    musicVolume = 0.00,
     effectVolume = 0.5
 }
 
