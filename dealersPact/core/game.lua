@@ -20,15 +20,19 @@ Game = {
     hoverFont = love.graphics.newFont("assets/fonts/NotoSansBold.ttf", 14),
     deckPosition = {x = 1400, y = 100},
     dealingAnimation = nil,
-    maxHandSize = 5, -- Maximum number of cards in the player's hand
+    maxHandSize = 5,
     shakeDuration = 0,
     shakeIntensity = 1.6,
     shakeOffset = {x = 0, y = 0},
     wheel = nil,
     screenWidth = love.graphics.getWidth(),
     screenHeight = love.graphics.getHeight(),
-    musicVolume = 0.00,
-    effectVolume = 0.5
+    musicVolume = 0.05,
+    effectVolume = 0.3,
+    roundNumber = 1,
+    canDrawCards = true,
+    playButton = {x = 100, y = 600, width = 100, height = 50},
+    dealerCardsVisible = false
 }
 
 function Game:indexOf(table, element)
@@ -79,22 +83,22 @@ function Game:initializeDecks()
 
     -- Add resource cards to player's deck
     for _, cardData in ipairs(cards.resourceCards) do
-        table.insert(self.deck, Card:new("resource_lq", cardData.name, cardData.effect, cardData.id))
+        table.insert(self.deck, Card:new("resource", cardData.name, cardData.effect, cardData.id))
     end
 
     -- Add action cards to player's deck
     for _, cardData in ipairs(cards.actionCards) do
-        table.insert(self.deck, Card:new("action_lq", cardData.name, cardData.effect, cardData.id))
+        table.insert(self.deck, Card:new("action", cardData.name, cardData.effect, cardData.id))
     end
 
     -- Add gamble cards to player's deck
     for _, cardData in ipairs(cards.gambleCards) do
-        table.insert(self.deck, Card:new("gamble_lq", cardData.name, cardData.effect, cardData.id))
+        table.insert(self.deck, Card:new("gamble", cardData.name, cardData.effect, cardData.id))
     end
 
     -- Add dealer cards to dealer's deck
     for _, cardData in ipairs(cards.dealerCards) do
-        table.insert(self.dealerDeck, Card:new("dealer_lq", cardData.name, cardData.effect, cardData.id))
+        table.insert(self.dealerDeck, Card:new("dealer", cardData.name, cardData.effect, cardData.id))
     end
 
     self:shuffleDeck(self.deck)
@@ -208,6 +212,7 @@ function Game:draw()
     love.graphics.setColor(1, 1, 1)
     love.graphics.setFont(love.graphics.newFont("assets/fonts/EnchantedLand.otf", 36))
     love.graphics.print("Soul Essence: " .. self.soulEssence, 20, 20)
+    love.graphics.print("Round: " .. self.roundNumber, 20, 60)
 
     -- Draw deck with the rainbow shader
     love.graphics.setShader(self.goldShader)
@@ -275,6 +280,13 @@ function Game:draw()
             love.graphics.print(effectLines[i], 10 + padding, 100 + padding * (i + 1))
         end
     end
+
+    -- Draw play button
+    love.graphics.setColor(0.2, 0.6, 0.2)
+    love.graphics.rectangle("fill", self.playButton.x, self.playButton.y, self.playButton.width, self.playButton.height)
+    love.graphics.setColor(1, 1, 1)
+    love.graphics.setFont(love.graphics.newFont("assets/fonts/NotoSansBold.ttf", 24))
+    love.graphics.print("Play", self.playButton.x + 20, self.playButton.y + 10)
 --    self.wheel:draw()
 end
 
@@ -302,9 +314,45 @@ function Game:handleMousePress(x, y, button)
                 self:playCard(card)
             end
         end
-
+        -- Check if the "Play Hand" button was clicked
+        if x >= self.playButton.x and x <= self.playButton.x + self.playButton.width and y >= self.playButton.y and y <= self.playButton.y + self.playButton.height then
+            self:completeRound()
+        end
         --self.wheel:handleMousePress(x, y)
     end
+end
+
+function Game:completeRound()
+    -- Calculate the total points from the player's hand
+    local playerPoints = 0
+    for _, card in ipairs(self.playerHand) do
+        if card.type == "resource" then
+            playerPoints = playerPoints + self:calculateResourcePoints(card)
+        end
+    end
+
+    -- Calculate the total points from the dealer's hand
+    local dealerPoints = 0
+    for _, card in ipairs(self.dealerHand) do
+        if card.type == "resource" then
+            dealerPoints = dealerPoints + self:calculateResourcePoints(card)
+        end
+    end
+
+    -- Update soul essence based on the round outcome
+    if playerPoints > dealerPoints then
+        self.soulEssence = self.soulEssence + playerPoints
+    else
+        self.soulEssence = self.soulEssence - dealerPoints
+    end
+
+    -- Make dealer cards visible
+    self.dealerCardsVisible = true
+
+    -- Start a new round with a 2 second delay
+    Timer.after(2, function()
+        self:startNewRound()
+    end)
 end
 
 function Game:playCard(card)
