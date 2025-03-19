@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+
+<head>
+
+    <!--- basic page needs
+    ================================================== -->
+    <meta charset="utf-8">
+    <title>404</title>
+    <meta name="description" content="404 Page">
+    <meta name="author" content="Myra">
+
+    <link rel="stylesheet" href="site/style.css">
+    <link href="https://fonts.googleapis.com/css?family=Josefin+Slab" rel="stylesheet"> 
+    <link href="https://fonts.googleapis.com/css?family=Rokkitt|Source+Code+Pro" rel="stylesheet"> 
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+
+    <!-- mobile specific metas
+    ================================================== -->
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+</head>
+
+<html>
+<body>
+    <div id="main">
+        <pre>
+____________/\\\________/\\\\\\\_______________/\\\____        
+ __________/\\\\\______/\\\/////\\\___________/\\\\\____       
+  ________/\\\/\\\_____/\\\____\//\\\________/\\\/\\\____      
+   ______/\\\/\/\\\____\/\\\_____\/\\\______/\\\/\/\\\____     
+    ____/\\\/__\/\\\____\/\\\_____\/\\\____/\\\/__\/\\\____    
+     __/\\\\\\\\\\\\\\\\_\/\\\_____\/\\\__/\\\\\\\\\\\\\\\\_   
+      _\///////////\\\//__\//\\\____/\\\__\///////////\\\//__  
+       ___________\/\\\_____\///\\\\\\\/_____________\/\\\____ 
+        ___________\///________\///////_______________\///_____
+        </pre>
+
+        <h2>
+            <p class="lead">Page not found: /<span id="filename" style="color: #00ff59;">unknown</span></p>
+        </h2>
+        <h2>
+            Click below to return home:
+        </h2>
+        <div class="icon-container">
+            <i class="fa"><a href="https://n1ji.github.io/dealersPact">&#xf14c;</a></i>
+        </div>
+
+    </div>
+
+<script>
+    // JavaScript to dynamically insert the filename
+    document.addEventListener('DOMContentLoaded', () => {
+        // Get the current URL path
+        const path = window.location.pathname;
+        const filename = path.split('/').pop() || 'unknown';
+
+        // Update the span with the filename
+        document.getElementById('filename').textContent = filename;
+    });
+</script>
+</body>
+
+</html>
