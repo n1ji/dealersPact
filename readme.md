@@ -1,4 +1,12 @@
-**The Dealer's Pact - Game Design Document**
+### Running the Game
+
+If you are on Windows, just download the release and run the exe.
+Easiest way on other platforms would be to download [LÖVE](https://love2d.org/), cloning the repo and running it with:
+   
+      love .
+---
+
+# **The Dealer's Pact - Game Design Document**
 
 ## **Overview**
 The Dealer's Pact is a **single-player deck-building roguelike** card game where the player engages in high-stakes gambling with an enigmatic Dealer. The game incorporates **deck customization, power-ups, modifiers, luck-based mechanics**, and a unique **Wheel of Fate** that alters the rules each round. The difficulty escalates as the player progresses, pushing them to make **strategic decisions** with the looming threat of losing their soul.
