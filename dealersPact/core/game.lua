@@ -1,5 +1,8 @@
 -- core/game.lua
 
+local utils = require("utils")
+print("Utils loaded", utils)
+
 Game = {
     state = "menu",
     deck = {},
@@ -7,13 +10,16 @@ Game = {
     playerHand = {},
     dealerHand = {},
     soulEssence = 100,
+    dealerSE = 100,
+    playerPoints = 0,  -- Track player's points for the current round
+    dealerPoints = 0,  -- Track dealer's points for the current round
     wheelOfFate = {},
     cardScale = 0.5,
     cardSpacing = 10,
     dealerStartX = 430,
     dealerStartY = 300,
     playerStartX = 430,
-    playerStartY = 600,
+    playerStartY = 580,
     cardWidth = 338 * 0.5,
     cardHeight = 507 * 0.5,
     hoveredCard = nil,
@@ -28,10 +34,9 @@ Game = {
     screenWidth = love.graphics.getWidth(),
     screenHeight = love.graphics.getHeight(),
     musicVolume = 0.05,
-    effectVolume = 0.3,
+    effectVolume = 0.2,
     roundNumber = 1,
     canDrawCards = true,
-    playButton = {x = 100, y = 600, width = 100, height = 50},
     dealerCardsVisible = false
 }
 
@@ -48,7 +53,19 @@ function Game:initialize()
     math.randomseed(os.time())
     self:initializeDecks()
     self:initializeWheelOfFate()
-    self:drawHands()
+
+    -- Initialize the dealer
+    self.dealer = require("core.dealer"):new()
+    self.dealer.deck = self.dealerDeck  -- Share the dealer's deck
+
+    -- Initialize the dealer's hand
+    self.dealer:resetHand(self)
+
+    -- Initialize the timer
+    self.timer = utils.Timer:new()
+
+    -- Debug: Print the utils table
+    print("Utils loaded:", utils)
 
     -- Load the deck and mask textures
     self.deckImage = love.graphics.newImage("assets/cards/back_lq.png")
@@ -69,6 +86,10 @@ function Game:initialize()
     -- Initialize the options menu
     self.optionsMenu = require("states.options")
     self.optionsMenu:initialize()
+
+    local Button = require("ui.button")
+    self.playButton = Button:new("Play Hand", love.graphics.getWidth() / 2 - 20, self.playerStartY - 70, 100, 50, function() self:completeRound() end, 20, 10)
+
 
     -- self.wheel = require("core.wheel")
     -- self.wheel:initialize(self.screenWidth, self.screenHeight)
@@ -100,9 +121,24 @@ function Game:initializeDecks()
     for _, cardData in ipairs(cards.dealerCards) do
         table.insert(self.dealerDeck, Card:new("dealer", cardData.name, cardData.effect, cardData.id))
     end
+    
+    for _, cardData in ipairs(cards.resourceCards) do
+        table.insert(self.dealerDeck, Card:new("dealer", cardData.name, cardData.effect, cardData.id))
+    end
+
+    for _, cardData in ipairs(cards.actionCards) do
+        table.insert(self.dealerDeck, Card:new("dealer", cardData.name, cardData.effect, cardData.id))
+    end
+
+    for _, cardData in ipairs(cards.gambleCards) do
+        table.insert(self.dealerDeck, Card:new("dealer", cardData.name, cardData.effect, cardData.id))
+    end
 
     self:shuffleDeck(self.deck)
     self:shuffleDeck(self.dealerDeck)
+
+    print("Dealer's deck initialized with " .. #self.dealerDeck .. " cards.")
+    print("Player's deck initialized with " .. #self.deck .. " cards.")
 end
 
 function Game:initializeWheelOfFate()
@@ -111,6 +147,9 @@ function Game:initializeWheelOfFate()
 end
 
 function Game:update(dt)
+    -- Update timers
+    self.timer:updateTimers(dt)
+
     -- Update hover state for options menu buttons
     if self.state == "settings" then
         local mouseX, mouseY = love.mouse.getPosition()
@@ -158,17 +197,6 @@ function Game:update(dt)
     self.goldShader:send("u_time", love.timer.getTime())
     self.goldShader:send("u_resolution", {love.graphics.getWidth(), love.graphics.getHeight()})
     self.goldShader:send("u_cursor", {cursorX, cursorY})  -- Pass cursor position to the shader
-
-    -- -- Update holo shader uniforms
-    -- self.holoShader:send("u_time", love.timer.getTime())
-    -- self.holoShader:send("u_resolution", {love.graphics.getWidth(), love.graphics.getHeight()})
-
-    -- -- Update rainbow shader uniforms
-    -- self.rainbowShader:send("time", love.timer.getTime())
-    -- self.rainbowShader:send("u_resolution", {love.graphics.getWidth(), love.graphics.getHeight()})
-
-    -- Update the wheel
-    --self.wheel:update(dt)
 end
 
 function Game:shuffleDeck(deck)
@@ -187,14 +215,34 @@ function Game:drawHands()
 end
 
 function Game:dealCard()
-    -- Check if the player's hand is already full
-    if #self.playerHand >= self.maxHandSize then
-        print("Your hand is full! You can't draw more than 5 cards.")
+    -- Check if the player's hand is already full or if drawing is disabled
+    if #self.playerHand >= self.maxHandSize or not self.canDrawCards then
+        print("Your hand is full or drawing is disabled!")
         return
+    end
+
+    -- Count the number of gamble and action cards in the player's hand
+    local gambleCount = 0
+    local actionCount = 0
+    for _, card in ipairs(self.playerHand) do
+        if card.type == "gamble" then
+            gambleCount = gambleCount + 1
+        elseif card.type == "action" then
+            actionCount = actionCount + 1
+        end
     end
 
     if #self.deck > 0 then
         local card = table.remove(self.deck, 1)
+
+        -- Check if the card exceeds the allowed limits
+        if (card.type == "gamble" and gambleCount >= 2) or (card.type == "action" and actionCount >= 2) then
+            -- If the card exceeds the limit, put it back in the deck and try again
+            table.insert(self.deck, card)
+            self:dealCard()  -- Try drawing another card
+            return
+        end
+
         card.x = self.deckPosition.x
         card.y = self.deckPosition.y
         card.targetX = self.playerStartX + (#self.playerHand) * (self.cardWidth + self.cardSpacing)
@@ -202,17 +250,35 @@ function Game:dealCard()
         card.animationProgress = 0
         self.dealingAnimation = card
         card.sound:play()
+
+        -- Debug: Print the card being drawn
+        print("Drew card:", card.name)
+
+        -- Disable drawing until the current card's animation is complete
+        self.canDrawCards = false
+        self.timer:setTimer(function()
+            self.canDrawCards = true
+        end, 0.5)  -- Adjust the delay time as needed
     else
         print("No more cards in the deck!")
     end
 end
 
 function Game:draw()
-    love.graphics.clear(hexToRGB("#1A1B3A"))
+    love.graphics.clear(hexToRGB("#2e1115"))
     love.graphics.setColor(1, 1, 1)
     love.graphics.setFont(love.graphics.newFont("assets/fonts/EnchantedLand.otf", 36))
-    love.graphics.print("Soul Essence: " .. self.soulEssence, 20, 20)
-    love.graphics.print("Round: " .. self.roundNumber, 20, 60)
+
+    -- Draw player's stats on the top left
+    love.graphics.print("Soul Essence: " .. self.soulEssence, 20, 600)
+    love.graphics.print("Score: " .. self.playerPoints, 20, 640)
+    love.graphics.print("Round: " .. self.roundNumber, 20, 680)
+
+    -- Draw dealer's stats
+    local dealerSoulX = love.graphics.getWidth() / 2 + 350
+    local dealerScoreX = love.graphics.getWidth() /2 + 650
+    love.graphics.print("Dealer Soul Essence: " .. self.dealerSE, 20, 20)
+    love.graphics.print("Dealer Score: " .. self.dealerPoints, 20, 60)
 
     -- Draw deck with the rainbow shader
     love.graphics.setShader(self.goldShader)
@@ -228,7 +294,7 @@ function Game:draw()
     end
 
     -- Draw dealer's hand
-    for i, card in ipairs(self.dealerHand) do
+    for i, card in ipairs(self.dealer.hand) do
         local cardX = self.dealerStartX + (i - 1) * (self.cardWidth + self.cardSpacing)
         local cardY = self.dealerStartY - 200
         card:draw(cardX, cardY)
@@ -250,7 +316,9 @@ function Game:draw()
         local padding = 10
         local maxWidth = 290
         local maxBoxWidth = 320
-
+        local lineHeight = font:getHeight()
+        local boxPosY = self.playerStartY + self.cardHeight + padding
+        local boxPosX = love.graphics.getWidth() / 2 - maxBoxWidth / 2
         -- Split the effect text into multiple lines if it's too long
         local effectLines = {}
         local currentLine = ""
@@ -265,29 +333,24 @@ function Game:draw()
         table.insert(effectLines, currentLine)
 
         -- Calculate the total height of the hover box
-        local lineHeight = font:getHeight()
+        
         local totalHeight = padding * 2 + lineHeight * (#effectLines + 1)
 
         -- Draw the hover box background
         love.graphics.setColor(0, 0, 0, 0.8)
-        love.graphics.rectangle("fill", 10, 100, maxBoxWidth + 20 * 2, totalHeight - 15)
+        love.graphics.rectangle("fill", boxPosX, boxPosY, maxBoxWidth + 20 * 2, totalHeight - 15)
         love.graphics.setColor(1, 1, 1)
 
         -- Draw the effect lines
         love.graphics.setFont(font)
-        love.graphics.print("Effect: " .. effectLines[1], 10 + padding, 100 + padding)
+        love.graphics.print("Effect: " .. effectLines[1], boxPosX + padding, boxPosY + padding)
         for i = 2, #effectLines do
-            love.graphics.print(effectLines[i], 10 + padding, 100 + padding * (i + 1))
+            love.graphics.print(effectLines[i], boxPosX + padding, boxPosY + padding * (i + 1))
         end
     end
 
     -- Draw play button
-    love.graphics.setColor(0.2, 0.6, 0.2)
-    love.graphics.rectangle("fill", self.playButton.x, self.playButton.y, self.playButton.width, self.playButton.height)
-    love.graphics.setColor(1, 1, 1)
-    love.graphics.setFont(love.graphics.newFont("assets/fonts/NotoSansBold.ttf", 24))
-    love.graphics.print("Play", self.playButton.x + 20, self.playButton.y + 10)
---    self.wheel:draw()
+    self.playButton:draw()
 end
 
 function Game:handleMousePress(x, y, button)
@@ -314,50 +377,63 @@ function Game:handleMousePress(x, y, button)
                 self:playCard(card)
             end
         end
+
         -- Check if the "Play Hand" button was clicked
-        if x >= self.playButton.x and x <= self.playButton.x + self.playButton.width and y >= self.playButton.y and y <= self.playButton.y + self.playButton.height then
-            self:completeRound()
+        if self.playButton:isHovered(x, y) then
+            self.playButton.action()  -- Call the button's action
         end
-        --self.wheel:handleMousePress(x, y)
     end
 end
 
 function Game:completeRound()
+    -- Dealer plays their hand
+    self.dealer:playHand(self)
+
     -- Calculate the total points from the player's hand
-    local playerPoints = 0
     for _, card in ipairs(self.playerHand) do
         if card.type == "resource" then
-            playerPoints = playerPoints + self:calculateResourcePoints(card)
+            self:applyResourceEffect(card)
         end
     end
 
-    -- Calculate the total points from the dealer's hand
-    local dealerPoints = 0
-    for _, card in ipairs(self.dealerHand) do
-        if card.type == "resource" then
-            dealerPoints = dealerPoints + self:calculateResourcePoints(card)
-        end
-    end
+    -- Debug: Print player and dealer points
+    print("Player Points after applying effects: " .. self.playerPoints)
+    print("Dealer Points: " .. self.dealerPoints)
 
     -- Update soul essence based on the round outcome
-    if playerPoints > dealerPoints then
-        self.soulEssence = self.soulEssence + playerPoints
+    if self.playerPoints > self.dealerPoints then
+        self.soulEssence = self.soulEssence + self.playerPoints
+        print("Player wins! Gained " .. self.playerPoints .. " soul essence.\n")
+    elseif self.dealerPoints > self.playerPoints then
+        self.soulEssence = self.soulEssence - self.dealerPoints
+        print("Dealer wins! Lost " .. self.dealerPoints .. " soul essence.\n")
     else
-        self.soulEssence = self.soulEssence - dealerPoints
+        print("It's a tie! No change in soul essence.\n")
     end
 
     -- Make dealer cards visible
     self.dealerCardsVisible = true
 
-    -- Start a new round with a 2 second delay
-    Timer.after(2, function()
-        self:startNewRound()
-    end)
+    -- Reset the player's hand for the next round
+    self.playerHand = {}
+    for i = 1, 5 do
+        self:dealCard()
+    end
+
+    -- Reset the dealer's hand for the next round
+    self.dealer:resetHand(self)
+
+    -- Reset points for the next round
+    self.playerPoints = 0
+    self.dealerPoints = 0
+
+    -- Increment the round number
+    self.roundNumber = self.roundNumber + 1
 end
 
 function Game:playCard(card)
     if card.type == "resource" then
-        self:applyResourceEffect(card)
+        self:calculateResourcePoints(card)
     elseif card.type == "action" then
         self:applyActionEffect(card)
     elseif card.type == "gamble" then
@@ -369,77 +445,118 @@ function Game:playCard(card)
     end
 end
 
+function Game:calculateResourcePoints(card)
+    -- Store the current soulEssence value
+    local originalSoulEssence = self.soulEssence
+    local originalPlayerPoints = self.playerPoints
+
+    -- Apply the resource effect to calculate the points
+    self:applyResourceEffect(card)
+
+    -- Calculate the difference in soulEssence after applying the effect
+    local points = self.soulEssence - originalSoulEssence
+    local playerPoints = self.playerPoints - originalPlayerPoints
+
+    -- Debug: Print the calculated points
+    print("Calculated points for card " .. card.name .. ": " .. points)
+    print("Player points: " .. playerPoints)
+
+    -- Return the calculated points
+    return points
+end
+
 function Game:applyResourceEffect(card)
+    print("Applying resource effect for card:", card.name, "ID:", card.id)
+    print("Applying resource effect for card:", card.name)
+    print("SE: ", self.soulEssence)
+    print("Player: ", self.playerPoints)
+    print("Dealer: ", self.dealerPoints)
+
     if card.id == 1 then
-        self.soulEssence = self.soulEssence + 10
+        self.playerPoints = self.playerPoints + 10
     elseif card.id == 2 then
-        self.soulEssence = self.soulEssence + 5
+        self.playerPoints = self.playerPoints + 5
         self:dealCard()
     elseif card.id == 3 then
-        self.soulEssence = self.soulEssence + 20
-        self.SE = self.SE - 3
-    elseif card.id == 4 then
-        if self.dealerScore > self.soulEssence then
-            self.soulEssence = self.soulEssence + 30
+        if self.soulEssence > 3 then
+            print("Not enough SE to play this card!")
+            return
         else
-            self.soulEssence = self.soulEssence + 15
+            self.playerPoints = self.playerPoints + 20
+            self.soulEssence = self.soulEssence - 3
+        end
+        
+    elseif card.id == 4 then
+        if self.dealerPoints > self.playerPoints then
+            self.playerPoints = self.playerPoints + 30
+        else
+            self.playerPoints = self.playerPoints + 15
         end
     elseif card.id == 5 then
-        if self.SE >= 10 then
-            self.soulEssence = self.soulEssence + 25
-            self.SE = self.SE - 10
+        if self.soulEssence >= 10 then
+            self.playerPoints = self.playerPoints + 25
+            self.soulEssence = self.soulEssence - 10
         end
     elseif card.id == 7 then
-        self.soulEssence = self.soulEssence + 10
+        self.playerPoints = self.playerPoints + 10
         self.reuseActionCard = true
     elseif card.id == 8 then
-        self.soulEssence = self.soulEssence + 20
+        self.playerPoints = self.playerPoints + 20
         -- Card is destroyed (no further action needed)
     elseif card.id == 9 then
-        self.soulEssence = self.soulEssence + 10
-        self.SE = self.SE + 3
+        self.playerPoints = self.playerPoints + 10
+        self.soulEssence = self.soulEssence + 3
     elseif card.id == 10 then
         if not self.playedGambleCard then
-            self.soulEssence = self.soulEssence + 15
+            self.playerPoints = self.playerPoints + 15
         end
     elseif card.id == 11 then
-        self.soulEssence = self.soulEssence + 25
-        self.dealerScore = self.dealerScore + 5
+        self.playerPoints = self.playerPoints + 25
+        self.dealerPoints = self.dealerPoints + 5
     elseif card.id == 12 then
-        self.soulEssence = self.soulEssence + 10
+        self.playerPoints = self.playerPoints + 10
         self:revealDealerCards(1)
     elseif card.id == 13 then
-        if self.SE >= 5 then
-            self.soulEssence = self.soulEssence + 30
-            self.SE = self.SE - 5
-            self.dealerScore = self.dealerScore - 5
+        if self.soulEssence >= 5 then
+            self.playerPoints = self.playerPoints + 30
+            self.soulEssence = self.soulEssence - 5
+            self.dealerPoints = self.dealerPoints - 5
         end
     elseif card.id == 14 then
-        self.soulEssence = self.soulEssence + 5
+        self.playerPoints = self.playerPoints + 5
         self.returnToHand = true
     elseif card.id == 15 then
-        self.soulEssence = self.soulEssence + 15
+        self.playerPoints = self.playerPoints + 15
         self.extraDrawOnWin = true
     elseif card.id == 16 then
-        self.soulEssence = self.soulEssence + 10
-        self.SE = self.SE + math.floor(self.soulEssence / 5)
+        self.playerPoints = self.playerPoints + 10
+        self.soulEssence = self.soulEssence + math.floor(self.playerPoints / 5)
     elseif card.id == 17 then
-        self.soulEssence = self.soulEssence + 40
-        self.SE = self.SE - 10
-        self:discardRandomCard()
+        if self.soulEssence < 10 then
+            print("Not enough SE to play this card!")
+            return
+        else
+            self.playerPoints = self.playerPoints + 40
+            self.soulEssence = self.soulEssence - 10
+            self:discardRandomCard()
+        end
     elseif card.id == 18 then
-        self.soulEssence = self.soulEssence + 15
+        self.playerPoints = self.playerPoints + 15
         self:revealTopCard()
     elseif card.id == 19 then
-        self.soulEssence = self.soulEssence + 5
+        self.playerPoints = self.playerPoints + 5
         self:dealCard()
         self:discardRandomCard()
     elseif card.id == 20 then
-        if self.SE >= 20 then
-            self.soulEssence = self.soulEssence + 50
-            self.SE = self.SE - 20
+        if self.soulEssence >= 20 then
+            self.playerPoints = self.playerPoints + 50
+            self.soulEssence = self.soulEssence - 20
         end
     end
+
+    -- Debug: Print updated values
+    print("Updated SE: ", self.soulEssence)
+    print("Updated Player Points: ", self.playerPoints)
 end
 
 function Game:applyActionEffect(card)
@@ -451,7 +568,7 @@ function Game:applyActionEffect(card)
     elseif card.id == 24 then
         if self.soulEssence >= 10 then
             self.soulEssence = self.soulEssence - 10
-            self.SE = self.SE + 5
+            self.playerPoints = self.playerPoints + 5
         end
     elseif card.id == 25 then
         self:revealDealerCards(2)
@@ -462,27 +579,33 @@ function Game:applyActionEffect(card)
     elseif card.id == 28 then
         self:undoLastCard()
     elseif card.id == 29 then
-        self.dealerScore = self.dealerScore + 5
-        self.soulEssence = self.soulEssence + 10
+        self.dealerPoints = self.dealerPoints + 5
+        self.playerPoints = self.playerPoints + 10
     elseif card.id == 30 then
         self.extraCardPlay = true
     elseif card.id == 31 then
-        if self.SE >= 5 then
-            self.SE = self.SE - 5
+        if self.soulEssence >= 5 then
+            self.soulEssence = self.soulEssence - 5
             self:stealDealerCard()
         end
     elseif card.id == 32 then
-        local transferAmount = math.min(10, self.dealerScore)
-        self.dealerScore = self.dealerScore - transferAmount
-        self.soulEssence = self.soulEssence + transferAmount
+        local transferAmount = math.min(10, self.dealerPoints)
+        self.dealerPoints = self.dealerPoints - transferAmount
+        self.playerPoints = self.playerPoints + transferAmount
     elseif card.id == 33 then
-        self.SE = self.SE + 10
-        self.soulEssence = self.soulEssence - 10
+        if self.playerPoints < 10 then
+            print("Not enough SE to play this card!")
+            return
+        else
+            self.soulEssence = self.soulEssence + 10
+            self.playerPoints = self.playerPoints - 10
+        end
+        
     elseif card.id == 35 then
         self:copyDealerCard()
     elseif card.id == 36 then
-        if self.SE >= 5 then
-            self.SE = self.SE - 5
+        if self.soulEssence >= 5 then
+            self.soulEssence = self.soulEssence - 5
             self:removeDealerCard()
         end
     elseif card.id == 37 then
@@ -497,29 +620,29 @@ function Game:applyActionEffect(card)
     elseif card.id == 40 then
         self.dealerDisabled = true
     elseif card.id == 41 then
-        self.dealerScore = self.dealerScore - 10
-        self.soulEssence = self.soulEssence + 10
+        self.dealerPoints = self.dealerPoints - 10
+        self.playerPoints = self.playerPoints + 10
     elseif card.id == 43 then
         self.dealerSEDisabled = true
     elseif card.id == 44 then
         self:swapWithDiscard()
     elseif card.id == 45 then
-        self.SE = self.SE + (5 * self.gambleCardsPlayed)
+        self.soulEssence = self.soulEssence + (5 * self.gambleCardsPlayed)
     end
 end
 
 function Game:applyGambleEffect(card)
     if card.id == 47 then
         if math.random(2) == 1 then
-            self.soulEssence = self.soulEssence * 2
+            self.playerPoints = self.playerPoints * 2
         else
-            self.soulEssence = self.soulEssence / 2
+            self.playerPoints = self.playerPoints / 2
         end
     elseif card.id == 48 then
-        if self.SE >= 10 then
-            self.SE = self.SE - 10
+        if self.soulEssence >= 10 then
+            self.soulEssence = self.soulEssence - 10
             if math.random(2) == 1 then
-                self.SE = self.SE + 30
+                self.soulEssence = self.soulEssence + 30
             end
         end
     elseif card.id == 49 then
@@ -534,69 +657,69 @@ function Game:applyGambleEffect(card)
     elseif card.id == 51 then
         local roll = math.random(6)
         if roll <= 3 then
-            self.SE = self.SE - 10
+            self.soulEssence = self.soulEssence - 10
         else
-            self.SE = self.SE + 15
+            self.soulEssence = self.soulEssence + 15
         end
     elseif card.id == 52 then
-        if self.SE >= 5 then
-            self.SE = self.SE - 5
+        if self.soulEssence >= 5 then
+            self.soulEssence = self.soulEssence - 5
             if math.random(2) == 1 then
-                self.SE = self.SE + 10
+                self.soulEssence = self.soulEssence + 10
             else
                 self:discardRandomCard()
             end
         end
     elseif card.id == 53 then
-        self.soulEssence = self.soulEssence + 50
-        self.SE = self.SE - 20
+        self.playerPoints = self.playerPoints + 50
+        self.soulEssence = self.soulEssence - 20
     elseif card.id == 54 then
-        if self.SE >= 10 then
-            self.SE = self.SE - 10
+        if self.soulEssence >= 10 then
+            self.soulEssence = self.soulEssence - 10
             if math.random(2) == 1 then
-                self.soulEssence = self.soulEssence * 2
+                self.playerPoints = self.playerPoints * 2
             else
-                self.soulEssence = self.soulEssence / 2
+                self.playerPoints = self.playerPoints / 2
             end
         end
     elseif card.id == 55 then
-        if self.SE >= 5 then
-            self.SE = self.SE - 5
+        if self.soulEssence >= 5 then
+            self.soulEssence = self.soulEssence - 5
             if math.random(2) == 1 then
-                self.SE = self.SE + 10
+                self.soulEssence = self.soulEssence + 10
                 self.dealerSE = self.dealerSE - 10
             else
-                self.SE = self.SE - 10
+                self.soulEssence = self.soulEssence - 10
                 self.dealerSE = self.dealerSE + 10
             end
         end
     elseif card.id == 57 then
-        self.soulEssence = self.soulEssence * 2
+        self.playerPoints = self.playerPoints * 2
         self.doublePointsActive = true
     elseif card.id == 58 then
-        if self.SE >= 5 then
-            self.SE = self.SE - 5
+        if self.soulEssence >= 5 then
+            self.soulEssence = self.soulEssence - 5
             if math.random(2) == 1 then
-                self.soulEssence = self.soulEssence + 15
+                self.playerPoints = self.playerPoints + 15
             else
-                self.soulEssence = self.soulEssence - 10
+                self.playerPoints = self.playerPoints - 10
             end
         end
     elseif card.id == 59 then
-        if self.SE >= 10 then
-            self.SE = self.SE - 10
+        if self.soulEssence >= 10 then
+            self.soulEssence = self.soulEssence - 10
             if math.random(2) == 1 then
-                self.SE = self.SE + 20
+                self.soulEssence = self.soulEssence + 20
             else
-                self.SE = self.SE - 15
+                self.soulEssence = self.soulEssence - 15
             end
         end
     elseif card.id == 60 then
-        local betAmount = self.SE
+        local betAmount = self.soulEssence
         if math.random(2) == 1 then
-            self.SE = self.SE * 2
+            self.soulEssence = self.soulEssence * 2
         else
-            self.SE = 0
+            self.soulEssence = 0
         end
     end
 end

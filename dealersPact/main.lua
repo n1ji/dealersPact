@@ -1,6 +1,7 @@
 -- main.lua
 
 function love.load()
+    print("Debug:\n")
     love.window.setIcon(love.image.newImageData("assets/icon.png"))
     -- Load scripts
     require("states.menu")

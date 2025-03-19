@@ -2,11 +2,12 @@
 
 Card = {}
 
-function Card:new(type, name, effect)
+function Card:new(type, name, effect, id)
     local card = {
         type = type,
         name = name,
         effect = effect,
+        id = id,
         sound = love.audio.newSource("assets/sounds/card.mp3", "static"),
         image = love.graphics.newImage("assets/cards/" .. type .. ".png"),
         flipped = false
@@ -41,9 +42,9 @@ function Card:drawText(x, y)
     local typeFont = love.graphics.newFont("assets/fonts/EnchantedLand.otf", 28)
     love.graphics.setFont(typeFont)
     local typeText = self.type
-    if self.type == "resource_lq" then
+    if self.type == "resource" then
         typeText = "Resource"
-    elseif self.type == "action_lq" then
+    elseif self.type == "action" then
         typeText = "Action"
     else
         typeText = "Gamble"

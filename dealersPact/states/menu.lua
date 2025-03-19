@@ -14,7 +14,7 @@ function Menu:initialize()
     self.red = {hexToRGB("#8B0000")}
     self.gold = {hexToRGB("#CAA52B")}
     self.purple = {hexToRGB("#3B1E5F")}
-    self.blue = {hexToRGB("#1A1B3A")}
+    self.blue = {hexToRGB("#2e1115")}
     self.gray = {0.8, 0.8, 0.8, 1}
     self.hoverColor = {0.6, 0.6, 0.6, 1}
 
@@ -26,12 +26,13 @@ function Menu:initialize()
     self.music:setLooping(true)
     love.audio.play(self.music)
 
+    self.gameLogo = love.graphics.newImage("assets/icon.png")
     self.titleText = "The Dealer's Pact"
     self.titleX = self.screenWidth / 2 - self.titleFont:getWidth(self.titleText) / 2
-    self.titleY = 100
+    self.titleY = self.screenHeight / 2 - 100
 
     local buttonGap = 30
-    local buttonStartY = 250
+    local buttonStartY = self.titleY + 150
 
     self.mainMenuButtons = {
         Button:new("Play", self.screenWidth / 2 - 100, buttonStartY, 200, 50, "play", 20, 40),
@@ -65,6 +66,9 @@ function Menu:draw()
         love.graphics.setFont(self.titleFont)
         love.graphics.setColor(self.white)
         love.graphics.print(self.titleText, self.titleX, self.titleY)
+
+        local logoWidth = self.gameLogo:getWidth()
+        love.graphics.draw(self.gameLogo, (self.screenWidth - logoWidth * 0.15) / 2, self.titleY - 300, 0, 0.15, 0.15)
 
         love.graphics.setFont(self.buttonFont)
         for i, button in ipairs(self.mainMenuButtons) do

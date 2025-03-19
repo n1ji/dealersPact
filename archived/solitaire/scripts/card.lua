@@ -29,40 +29,7 @@ function Card:draw(x, y)
         love.graphics.setColor(0, 0, 0)
         love.graphics.rectangle("line", x, y, cardWidth, cardHeight)
         love.graphics.setColor(1, 1, 1)  -- Reset color to white
-
-        -- Draw a rounded white box behind the value and suit text
-        love.graphics.setColor(1, 1, 1)  -- White color
-        drawRoundedRectangle(x + 5, y + 5, 30, 20, 5)  -- Rounded rectangle with corner radius 5
-
-        -- Draw the card value and suit in the corner
-        love.graphics.setFont(love.graphics.newFont("fonts/NotoSansBold.ttf", 12))
-        -- Convert card value to display text
-        local valueText
-        if self.value == 1 then
-            valueText = "A"
-        elseif self.value == 11 then
-            valueText = "J"
-        elseif self.value == 12 then
-            valueText = "Q"
-        elseif self.value == 13 then
-            valueText = "K"
-        else
-            valueText = tostring(self.value)
-        end
-        -- Set text color based on suit (red for hearts and diamonds, black for others)
-        if self.suit == 2 or self.suit == 3 then  -- Hearts (2) or Diamonds (3)
-            love.graphics.setColor(1, 0, 0)  -- Red
-        else
-            love.graphics.setColor(0, 0, 0)  -- Black
-        end
-        love.graphics.print(valueText .. self:getSuitSymbol(), x + 5, y + 5)
-        love.graphics.setColor(1, 1, 1)  -- Reset color
     end
-end
-
-function Card:getSuitSymbol()
-    local suits = {"♠", "♥", "♦", "♣"}
-    return suits[self.suit]
 end
 
 function Card:toggleFlip()
