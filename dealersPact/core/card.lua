@@ -12,7 +12,7 @@ function Card:new(type, name, effect, id)
         image = love.graphics.newImage("assets/cards/" .. type .. ".png"),
         flipped = false
     }
-    card.sound:setVolume(Game.effectVolume)
+    card.sound:setVolume(Settings.effectVolume)
     setmetatable(card, self)
     self.__index = self
     return card

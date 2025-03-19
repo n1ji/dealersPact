@@ -1,9 +1,6 @@
 local Button = require("ui.button")
 
-OptionsMenu = {
-    musicVolume = Game.musicVolume,
-    effectVolume = Game.effectVolume
-}
+OptionsMenu = {}
 
 function OptionsMenu:initialize()
     self.font = love.graphics.newFont("assets/fonts/EnchantedLand.otf", 36)
@@ -42,22 +39,30 @@ function OptionsMenu:handleMousePress(x, y)
     for i, button in ipairs(self.settingsButtons) do
         if button:isHovered(x, y) then
             if button.action == "musicUp" then
-                Game.musicVolume = self.musicVolume + 0.05
-                self.music:setVolume(Game.musicVolume) -- Update music volume
-                
-                --love.audio.setVolume(love.audio.getVolume + 0.1)
-                print("VolY " .. tostring(self.musicVolume))
+                -- Increase music volume
+                Settings.setMusicVolume(Settings.musicVolume + 0.05)
+                print("Music Volume: " .. tostring(Settings.musicVolume))
             elseif button.action == "musicDown" then
-                Game.music:setVolume(Game.musicVolume - 0.05) -- Update music volume
-                print("VolY " .. tostring(self.musicVolume))
+                -- Decrease music volume
+                Settings.setMusicVolume(Settings.musicVolume - 0.05)
+                print("Music Volume: " .. tostring(Settings.musicVolume))
             elseif button.action == "effectsUp" then
-                print("VolY " .. tostring(self.effectVolume))
+                -- Increase effects volume
+                Settings.setEffectVolume(Settings.effectVolume + 0.05)
+                print("Effects Volume: " .. tostring(Settings.effectVolume))
             elseif button.action == "effectsDown" then
-                print("VolY " .. tostring(self.effectVolume))
+                -- Decrease effects volume
+                Settings.setEffectVolume(Settings.effectVolume - 0.05)
+                print("Effects Volume: " .. tostring(Settings.effectVolume))
             elseif button.action == "muteMusic" then
-                love.audio.setVolume(0)
-                -- Handle mute music
-                print("Mute Music clicked")
+                -- Toggle mute for music
+                if Settings.musicVolume > 0 then
+                    Settings.setMusicVolume(0)  -- Mute music
+                    print("Music Muted")
+                else
+                    Settings.setMusicVolume(0.5)  -- Unmute music (reset to default)
+                    print("Music Unmuted")
+                end
             elseif button.action == "back" then
                 -- Return to the previous state
                 return "return"

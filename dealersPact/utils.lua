@@ -51,8 +51,28 @@ function Timer:updateTimers(dt)
     end
 end
 
+Settings = {
+    musicVolume = 0.00,  -- Default music volume
+    effectVolume = 0.2   -- Default effect volume
+}
+
+function Settings.setMusicVolume(volume)
+    Settings.musicVolume = math.max(0, math.min(1, volume))
+    if Menu.music then
+        Menu.music:setVolume(Settings.musicVolume)
+    end
+    if Game.music then
+        Game.music:setVolume(Settings.musicVolume)
+    end
+end
+
+function Settings.setEffectVolume(volume)
+    Settings.effectVolume = math.max(0, math.min(1, volume))
+end
+
 return {
     drawRoundedRectangle = drawRoundedRectangle,
     hexToRGB = hexToRGB,
-    Timer = Timer
+    Timer = Timer,
+    Settings = Settings
 }

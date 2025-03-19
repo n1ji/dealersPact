@@ -13,6 +13,7 @@ function Dealer:new()
 end
 
 function Dealer:resetHand(game)
+    print("Resetting dealer's hand. Current hand size: " .. #self.hand)
     -- Reset the dealer's hand at the start of each round
     self.hand = {}
     for i = 1, 5 do
@@ -34,44 +35,69 @@ function Dealer:resetHand(game)
 end
 
 function Dealer:playHand(game)
-    -- Track if the dealer has played a resource card
-    local hasPlayedResource = false
+    print("Dealer is playing their hand...")
+    -- Ensure the dealer has cards to play
+    if #self.hand == 0 then
+        print("Dealer has no cards to play! Drawing cards...")
+        self:resetHand(game)  -- Reset the dealer's hand
+    end
+
+    -- Track if the dealer has played a card
+    local hasPlayedCard = false
 
     -- Play cards based on the round number
     if game.roundNumber <= 5 then
-        -- Random strategy for the first 5 rounds
+        -- Early rounds: Play 1-2 cards, prioritizing resource cards
         for _, card in ipairs(self.hand) do
-            -- Always play at least 1 resource card
-            if not hasPlayedResource and card.type == "resource" then
-                game:applyResourceEffect(card)
-                hasPlayedResource = true
-            elseif math.random(2) == 1 then  -- 50% chance to play each card
+            if not hasPlayedCard and card.type == "resource" then
+                print("Dealer playing resource card:", card.name)
+                game:applyDealerResourceEffect(card)
+                hasPlayedCard = true
+            elseif math.random(2) == 1 then  -- 50% chance to play additional cards
                 if card.type == "resource" then
-                    game:applyResourceEffect(card)
+                    print("Dealer playing resource card:", card.name)
+                    game:applyDealerResourceEffect(card)
                 elseif card.type == "action" then
-                    game:applyActionEffect(card)
+                    print("Dealer playing action card:", card.name)
+                    game:applyDealerActionEffect(card)
                 elseif card.type == "gamble" then
-                    game:applyGambleEffect(card)
+                    print("Dealer playing gamble card:", card.name)
+                    game:applyDealerGambleEffect(card)
                 end
+                hasPlayedCard = true
             end
         end
     else
-        -- Improved strategy after round 5
+        -- Later rounds: Play 2-3 cards, prioritizing stronger cards
+        local cardsPlayed = 0
         for _, card in ipairs(self.hand) do
-            -- Always play at least 1 resource card
-            if not hasPlayedResource and card.type == "resource" then
-                game:applyResourceEffect(card)
-                hasPlayedResource = true
-            -- Play resource cards
-            elseif card.type == "resource" then
-                game:applyResourceEffect(card)
-            -- Play action and gamble cards with a higher probability
-            elseif card.type == "action" or card.type == "gamble" then
-                if math.random(3) <= 2 then  -- 66% chance to play action/gamble cards
-                    game:applyActionEffect(card)
-                    game:applyGambleEffect(card)
+            if cardsPlayed < 2 or math.random(2) == 1 then  -- Play at least 2 cards, with a chance for more
+                if card.type == "resource" then
+                    print("Dealer playing resource card:", card.name)
+                    game:applyDealerResourceEffect(card)
+                elseif card.type == "action" then
+                    print("Dealer playing action card:", card.name)
+                    game:applyDealerActionEffect(card)
+                elseif card.type == "gamble" then
+                    print("Dealer playing gamble card:", card.name)
+                    game:applyDealerGambleEffect(card)
                 end
+                cardsPlayed = cardsPlayed + 1
+                hasPlayedCard = true
             end
+        end
+    end
+
+    -- If no cards were played (unlikely), force the dealer to play one card
+    if not hasPlayedCard then
+        local card = self.hand[1]  -- Play the first card in the hand
+        print("Dealer forced to play card:", card.name)
+        if card.type == "resource" then
+            game:applyDealerResourceEffect(card)
+        elseif card.type == "action" then
+            game:applyDealerActionEffect(card)
+        elseif card.type == "gamble" then
+            game:applyDealerGambleEffect(card)
         end
     end
 end

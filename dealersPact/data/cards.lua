@@ -15,7 +15,7 @@ Cards.resourceCards = {
     { id = 8, name = "Ethereal Gold", effect = "+20 points, but is destroyed after use" },
     { id = 9, name = "Soul Residue", effect = "+10 points, Convert 3 points into SE" },
     { id = 10, name = "Stacked Fortune", effect = "+15 points, Cannot be used if you played a gamble card this round" },
-    { id = 11, name = "Twisted Wealth", effect = "+25 points, Opponent gains 5 points too" },
+    { id = 11, name = "Twisted Wealth", effect = "+25 points, Dealer gains 5 points too" },
     { id = 12, name = "Fool’s Gold", effect = "+10 points, Reveal Dealer’s next card when played" },
     { id = 13, name = "Infernal Coin", effect = "+30 points, Costs 5 SE, Steals 5 points from the Dealer" },
     { id = 14, name = "Phantom Silver", effect = "+5 points, Returns to your hand next round" },
