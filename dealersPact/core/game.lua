@@ -9,7 +9,7 @@ Game = {
     dealerDeck = {},
     playerHand = {},
     dealerHand = {},
-    soulEssence = 100,
+    soulEssence = 20,
     dealerSE = 100,
     playerPoints = 0,  -- Track player's points for the current round
     dealerPoints = 0,  -- Track dealer's points for the current round
@@ -37,6 +37,7 @@ Game = {
     canDrawCards = true,
     dealerCardsVisible = false,
     extraDrawOnWin = false,
+    extraDrawCards = 0,
     gambleCardsPlayed = 0
 }
 
@@ -53,6 +54,11 @@ function Game:initialize()
     math.randomseed(os.time())
     self:initializeDecks()
     self:initializeWheelOfFate()
+
+    self.soulEssence = 2
+    self.dealerSE = 100
+    self.playerPoints = 0
+    self.dealerPoints = 0
 
     -- Initialize the dealer
     self.dealer = require("core.dealer"):new()
@@ -90,6 +96,8 @@ function Game:initialize()
     local Button = require("ui.button")
     self.playButton = Button:new("Play Hand", love.graphics.getWidth() / 2 - 20, self.playerStartY - 70, 100, 50, function() self:completeRound() end, 20, 10)
 
+    -- Add replay button
+    self.replayButton = Button:new("Replay", love.graphics.getWidth() / 2 - 50, love.graphics.getHeight() / 2 + 150, 100, 50, function() self:goToMainMenu() end, 20, 10)
 
     -- self.wheel = require("core.wheel")
     -- self.wheel:initialize(self.screenWidth, self.screenHeight)
@@ -145,6 +153,11 @@ function Game:initializeWheelOfFate()
 end
 
 function Game:update(dt)
+    -- Check for game over condition
+    if self.soulEssence <= 0 then
+        self.state = "gameOver"
+    end
+
     -- Update timers
     self.timer:updateTimers(dt)
 
@@ -253,7 +266,7 @@ function Game:dealCard()
         card.sound:play()
 
         -- Debug: Print the card being drawn
-        print("Drew card:", card.name)
+        print("Drew card:", card.name .. "ID:" .. card.id)
 
         -- Disable drawing until the current card's animation is complete
         self.canDrawCards = false
@@ -269,6 +282,62 @@ function Game:draw()
     love.graphics.clear(hexToRGB("#2e1115"))
     love.graphics.setColor(1, 1, 1)
     love.graphics.setFont(love.graphics.newFont("assets/fonts/EnchantedLand.otf", 36))
+
+    if self.state == "gameOver" then
+        -- Display "Game Over" in the center of the screen
+        local gameOverText = "Game Over"
+        local dealerWinsText = "Dealer Wins!"
+        local reasonText = "Reason: " .. (self.lastDealerCard and self.lastDealerCard.name or "Unknown")
+        local font = love.graphics.newFont("assets/fonts/EnchantedLand.otf", 72)
+        love.graphics.setFont(font)
+        local textWidth = font:getWidth(gameOverText)
+        local textHeight = font:getHeight(gameOverText)
+        love.graphics.print(gameOverText, (love.graphics.getWidth() - textWidth) / 2, (love.graphics.getHeight() - textHeight) / 2 - 50)
+        
+        font = love.graphics.newFont("assets/fonts/EnchantedLand.otf", 48)
+        love.graphics.setFont(font)
+        textWidth = font:getWidth(dealerWinsText)
+        textHeight = font:getHeight(dealerWinsText)
+        love.graphics.print(dealerWinsText, (love.graphics.getWidth() - textWidth) / 2, (love.graphics.getHeight() - textHeight) / 2 + 20)
+        
+        font = love.graphics.newFont("assets/fonts/EnchantedLand.otf", 36)
+        love.graphics.setFont(font)
+        textWidth = font:getWidth(reasonText)
+        textHeight = font:getHeight(reasonText)
+        love.graphics.print(reasonText, (love.graphics.getWidth() - textWidth) / 2, (love.graphics.getHeight() - textHeight) / 2 + 80)
+        
+        -- Draw replay button
+        self.replayButton:draw()
+        
+        return
+    end
+
+    if self.state == "playerWins" then
+        -- Display "You Beat the Dealer!" in the center of the screen
+        local winText = "You Beat the Dealer!"
+        local finalSEText = "Final Soul Essence: " .. self.soulEssence
+        local finalScoreText = "Total Score: " .. self.playerPoints
+        local font = love.graphics.newFont("assets/fonts/EnchantedLand.otf", 72)
+        love.graphics.setFont(font)
+        local textWidth = font:getWidth(winText)
+        local textHeight = font:getHeight(winText)
+        love.graphics.print(winText, (love.graphics.getWidth() - textWidth) / 2, (love.graphics.getHeight() - textHeight) / 2 - 50)
+        
+        font = love.graphics.newFont("assets/fonts/EnchantedLand.otf", 48)
+        love.graphics.setFont(font)
+        textWidth = font:getWidth(finalSEText)
+        textHeight = font:getHeight(finalSEText)
+        love.graphics.print(finalSEText, (love.graphics.getWidth() - textWidth) / 2, (love.graphics.getHeight() - textHeight) / 2 + 20)
+        
+        textWidth = font:getWidth(finalScoreText)
+        textHeight = font:getHeight(finalScoreText)
+        love.graphics.print(finalScoreText, (love.graphics.getWidth() - textWidth) / 2, (love.graphics.getHeight() - textHeight) / 2 + 80)
+        
+        -- Draw replay button
+        self.replayButton:draw()
+        
+        return
+    end
 
     -- draw stats
     local halfScreen = love.graphics.getHeight() / 2
@@ -363,6 +432,10 @@ function Game:draw()
 end
 
 function Game:handleMousePress(x, y, button)
+    if self.state ~= "playing" then
+        return
+    end
+
     if button == 1 then
         -- Check if the deck was clicked
         if x >= self.deckPosition.x and x <= self.deckPosition.x + self.cardWidth and
@@ -391,6 +464,11 @@ function Game:handleMousePress(x, y, button)
         if self.playButton:isHovered(x, y) then
             self.playButton.action()  -- Call the button's action
         end
+
+        -- Check if the "Replay" button was clicked
+        if self.replayButton:isHovered(x, y) then
+            self.replayButton.action()  -- Call the button's action
+        end
     end
 end
 
@@ -398,12 +476,24 @@ function Game:completeRound()
     -- Reset gamble cards played counter
     self.gambleCardsPlayed = 0
 
+    -- Debug: Print the dealer's hand before playing
+    print("\n\nDealer's hand before playing:")
+    for i, card in ipairs(self.dealer.hand) do
+        print("Card " .. i .. ": " .. card.name)
+    end
+
     -- Dealer plays their hand first
     self.dealer:playHand(self)
 
+    -- Debug: Print the dealer's hand after playing
+    print("\nDealer's hand after playing:")
+    for i, card in ipairs(self.dealer.hand) do
+        print("Card " .. i .. ": " .. card.name)
+    end
+
     -- Debug: Print dealer's points and SE after playing their hand
     print("Dealer Points after playing hand: " .. self.dealerPoints)
-    print("Dealer SE after playing hand: " .. self.dealerSE)
+    print("Dealer SE after playing hand: " .. self.dealerSE .. "\n")
 
     -- Calculate the total points from the player's hand (only if the player has played cards)
     if #self.playerHand > 0 then
@@ -420,9 +510,8 @@ function Game:completeRound()
         end
     end
 
-    -- Debug: Print player and dealer points
+    -- Debug: Print player points
     print("Player Points after applying effects: " .. self.playerPoints)
-    print("Dealer Points: " .. self.dealerPoints)
 
     -- Update soul essence based on the round outcome
     if self.playerPoints > self.dealerPoints then
@@ -440,6 +529,18 @@ function Game:completeRound()
         print("Dealer wins! Lost " .. self.dealerPoints .. " soul essence.\n")
     else
         print("It's a tie! No change in soul essence.\n")
+    end
+
+    -- Check for game over condition
+    if self.soulEssence <= 0 then
+        self.state = "gameOver"
+        return
+    end
+
+    -- Check for player win condition
+    if self.roundNumber >= 10 then
+        self.state = "playerWins"
+        return
     end
 
     -- Make dealer cards visible
@@ -461,7 +562,7 @@ function Game:completeRound()
     -- Start dealing cards for the next round
     local numCards = 5
     if self.extraDrawNextRound then
-        numCards = numCards + 1  -- Draw an extra card
+        numCards = numCards + self.extraDrawCards  -- Draw an extra card
         self.extraDrawNextRound = false  -- Reset the flag
     end
     self:startDealingCards(numCards)
@@ -527,6 +628,12 @@ function Game:calculateResourcePoints(card)
     return SE
 end
 
+
+
+
+
+
+
 function Game:applyResourceEffect(card)
     print("Applying resource effect for card:", card.name, "ID:", card.id)
     print("SE: ", self.soulEssence)
@@ -565,7 +672,7 @@ function Game:applyResourceEffect(card)
         -- Card is destroyed (no further action needed)
     elseif card.id == 9 then
         self.playerPoints = self.playerPoints + 10
-        self.soulEssence = self.soulEssence + 3
+        self.soulEssence = self.soulEssence - 3
     elseif card.id == 10 then
         if not self.playedGambleCard then
             self.playerPoints = self.playerPoints + 15
@@ -624,8 +731,14 @@ function Game:applyActionEffect(card)
         self:swapCardWithDealer()
     elseif card.id == 23 then
         self.canDrawCards = true
-        self:dealCard()
-        self:dealCard()
+        for i = 1, 2 do
+            self.timer:setTimer(function()
+                -- Enable drawing for this card
+                self.canDrawCards = true
+                self:dealCard()
+                self.canDrawCards = false
+            end, (i - 1) * 0.2)
+        end
     elseif card.id == 24 then
         if self.soulEssence >= 10 then
             self.soulEssence = self.soulEssence - 10
@@ -635,8 +748,16 @@ function Game:applyActionEffect(card)
         self:revealDealerCards(2)
     elseif card.id == 26 then
         self:negateDealerCard()
-    elseif card.id == 27 then
-        self:playDealerCard()
+    elseif card.id == 27 then  -- Shadow Play
+        print("Attempting to play Shadow Play...")
+        if #self.dealer.hand > 0 then
+            local randomIndex = math.random(#self.dealer.hand)
+            local dealerCard = self.dealer.hand[randomIndex]
+            print("Playing Dealer Card: " .. dealerCard.name)
+            self:applyDealerEffect(dealerCard.effect)
+        else
+            print("Dealer's hand is empty!")
+        end
     elseif card.id == 28 then
         self:undoLastCard()
     elseif card.id == 29 then
@@ -670,9 +791,7 @@ function Game:applyActionEffect(card)
         end
     elseif card.id == 37 then
         self:discardHand()
-        for i = 1, 5 do
-            self:dealCard()
-        end
+        self:startDealingCards(5)
     elseif card.id == 38 then
         self:revealDealerHand()
     elseif card.id == 39 then
@@ -1027,6 +1146,7 @@ function Game:applyDealerGambleEffect(card)
 end
 
 function Game:applyDealerCardEffect(card)
+    self.lastDealerCard = card  -- Track the last dealer card played
     if card.id == 61 then
         -- Card Ban: Prevents the player from using one type of card this round
         self.playerCardBan = true
@@ -1037,17 +1157,15 @@ function Game:applyDealerCardEffect(card)
             self.dealerSE = self.dealerSE + 5
         end
     elseif card.id == 63 then
-        -- Unstable Points: The player's points fluctuate randomly (-10 to +10)
-        local fluctuation = math.random(-10, 10)
+        -- Unstable Points: The player's points fluctuate randomly (-15 to +5)
+        local fluctuation = math.random(-15, 5)
         self.playerPoints = self.playerPoints + fluctuation
     elseif card.id == 64 then
         -- Hand Disruption: Forces the player to discard a random card
         self:discardRandomCard()
     elseif card.id == 65 then
         -- Forced Wager: The player must gamble 10 SE
-        if self.soulEssence >= 10 then
-            self.soulEssence = self.soulEssence - 10
-        end
+        self.soulEssence = self.soulEssence - 10
     elseif card.id == 66 then
         -- Extra Draw: The Dealer draws an extra card
         self:dealCard()
@@ -1062,6 +1180,59 @@ function Game:applyDealerCardEffect(card)
         -- Dealer’s Gambit: The Dealer gains 20 points but loses 10 SE
         self.dealerPoints = self.dealerPoints + 20
         self.dealerSE = self.dealerSE - 10
+    elseif card.id == 71 then
+        -- Soul Theft: Steals a random amount of SE from the player (1-10 SE)
+        local stolenSE = math.random(1, 10)
+        if self.soulEssence >= stolenSE then
+            self.soulEssence = self.soulEssence - stolenSE
+            self.dealerSE = self.dealerSE + stolenSE
+        end
+    elseif card.id == 72 then
+        -- Point Drain: Steals 10 points from the player
+        self.playerPoints = self.playerPoints - 10
+        self.dealerPoints = self.dealerPoints + 10
+    elseif card.id == 73 then
+        -- Double Trouble: The Dealer plays two additional cards this round
+        if self.doubleTroubleCount < self.maxDoubleTroublePlays then
+            self.doubleTroubleCount = self.doubleTroubleCount + 1
+            self.dealer:playHand(self)
+            self.dealer:playHand(self)
+        else
+            print("Double Trouble limit reached for this round.")
+        end
+    elseif card.id == 74 then
+        -- Essence Swap: Swaps SE with the player
+        local tempSE = self.soulEssence
+        self.soulEssence = self.dealerSE
+        self.dealerSE = tempSE
+    elseif card.id == 75 then
+        -- Total Disruption: Forces the player to discard their entire hand
+        self:discardHand()
+    end
+end
+
+
+
+                    ----------------------------
+                    --- Card effect functions---
+                    ----------------------------
+
+function Game:playRandomDealerCard()
+    if #self.dealerHand > 0 then
+        local randomIndex = math.random(#self.dealerHand)
+        local card = self.dealerHand[randomIndex]
+        print("Playing random dealer card:", card.name)
+        if card.type == "resource" then
+            self:applyDealerResourceEffect(card)
+        elseif card.type == "action" then
+            self:applyDealerActionEffect(card)
+        elseif card.type == "gamble" then
+            self:applyDealerGambleEffect(card)
+        elseif card.type == "dealer" then
+            self:applyDealerCardEffect(card)
+        end
+    else
+        print("Dealer's hand is empty!")
     end
 end
 
@@ -1191,17 +1362,14 @@ function Game:swapHandsWithDealer()
     print("Swapped hands with the dealer.")
 end
 
-function Game:spinWheelOfFate()
-    local effect = self.wheelOfFate[math.random(#self.wheelOfFate)]
-    print("Wheel of Fate: " .. effect.name)
+function Game:goToMainMenu()
+    self.state = "menu"
 end
 
 function Game:start()
     self.state = "playing"
     self:initialize()
-
-    -- Deal 5 cards to the player at the start of the game
-    for i = 1, 5 do
-        self:dealCard()
-    end
+    self.timer:setTimer(function()
+        self:startDealingCards(5)
+    end, 1)
 end

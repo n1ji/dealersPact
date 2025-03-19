@@ -13,7 +13,7 @@ Cards.resourceCards = {
     -- { id = 6, name = "Cursed Coin", effect = "+30 points, Flip a coin: Lose 10 SE on heads" },
     { id = 7, name = "Lucky Charm", effect = "+10 points, Reuse one action card next round" },
     { id = 8, name = "Ethereal Gold", effect = "+20 points, but is destroyed after use" },
-    { id = 9, name = "Soul Residue", effect = "+10 points, Convert 3 points into SE" },
+    { id = 9, name = "Soul Residue", effect = "+10 points, Costs 3 SE" },
     { id = 10, name = "Stacked Fortune", effect = "+15 points, Cannot be used if you played a gamble card this round" },
     { id = 11, name = "Twisted Wealth", effect = "+25 points, Dealer gains 5 points too" },
     { id = 12, name = "Fool’s Gold", effect = "+10 points, Reveal Dealer’s next card when played" },
@@ -77,16 +77,20 @@ Cards.gambleCards = {
 
 -- Dealer Cards (10)
 Cards.dealerCards = {
-    { id = 61, name = "Card Ban", effect = "Prevents the player from using one type of card this round" },
-    { id = 62, name = "SE Drain", effect = "Steals 5 SE from the player" },
+    { id = 61, name = "Card Ban", effect = "Prevents the player from using one type of card this round", value = 7 },
+    { id = 62, name = "SE Drain", effect = "Steals 5 SE from the player", value = 8 },
     { id = 63, name = "Unstable Points", effect = "The player's points for this round fluctuate randomly (-10 to +10)" },
     { id = 64, name = "Hand Disruption", effect = "Forces the player to discard a random card" },
-    { id = 65, name = "Forced Wager", effect = "The player must gamble 10 SE" },
+    { id = 65, name = "Forced Wager", effect = "The player must gamble 10 SE", value = 9 },
     { id = 66, name = "Extra Draw", effect = "The Dealer draws an extra card this round" },
-    -- { id = 67, name = "Twist of Fate", effect = "The Wheel of Fate is spun twice and both effects apply" },
     { id = 68, name = "Phantom Stash", effect = "The Dealer can reuse one of their previously played cards" },
-    { id = 69, name = "Soul Tax", effect = "The player loses 1 SE for every 10 points they score this round" },
-    { id = 70, name = "Dealer’s Gambit", effect = "The Dealer gains 20 points but loses 10 SE" }
+    { id = 69, name = "Soul Tax", effect = "The player loses 1 SE for every 10 points they score this round", value = 10 },
+    { id = 70, name = "Dealer’s Gambit", effect = "The Dealer gains 20 points but loses 10 SE" },
+    { id = 71, name = "Soul Theft", effect = "Steals a random amount of SE from the player (1-10 SE)", value = 11 },
+    { id = 72, name = "Point Drain", effect = "Steals 10 points from the player", value = 12 },
+--    { id = 73, name = "Double Trouble", effect = "The Dealer plays two additional cards this round", value = 13 },
+    { id = 74, name = "Essence Swap", effect = "Swaps SE with the player", value = 14 },
+    { id = 75, name = "Total Disruption", effect = "Forces the player to discard their entire hand", value = 15 }
 }
 
 -- Wheel of Fate Effects (20)

@@ -47,6 +47,10 @@ function Menu:initialize()
 end
 
 function Menu:update(dt)
+    if Game.state ~= "menu" then
+        return
+    end
+
     -- Update hover state for options menu buttons
     if self.currentMenu == "settings" then
         local mouseX, mouseY = love.mouse.getPosition()
@@ -80,12 +84,16 @@ function Menu:draw()
 end
 
 function Menu:handleMousePress(x, y, button)
+    if Game.state ~= "menu" then
+        return  -- Exit the function if the game is not in the "menu" state
+    end
+
     if self.currentMenu == "main" then
         for i, btn in ipairs(self.mainMenuButtons) do
             if btn:isHovered(x, y) then
                 if btn.action == "play" then
                     Game.state = "playing"
-                    Game:initialize()
+                    Game:start()
                 elseif btn.action == "settings" then
                     self.currentMenu = "settings"
                 elseif btn.action == "quit" then

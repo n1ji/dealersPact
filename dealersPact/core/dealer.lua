@@ -35,71 +35,84 @@ function Dealer:resetHand(game)
 end
 
 function Dealer:playHand(game)
-    print("Dealer is playing their hand...")
+    print("\nDealer is playing their hand...")
     -- Ensure the dealer has cards to play
     if #self.hand == 0 then
         print("Dealer has no cards to play! Drawing cards...")
         self:resetHand(game)  -- Reset the dealer's hand
     end
 
-    -- Track if the dealer has played a card
-    local hasPlayedCard = false
+    -- Track the number of cards played
+    local cardsPlayed = 0
+    local hasPlayedDealerCard = false
+
+    -- Determine the number of cards to play based on the round number
+    local minCardsToPlay = 3
+    local maxCardsToPlay = 3
+    if game.roundNumber <= 2 then
+        maxCardsToPlay = 3
+    elseif game.roundNumber <= 4 then
+        maxCardsToPlay = 5
+    elseif game.roundNumber <= 6 then
+        maxCardsToPlay = 7
+    elseif game.roundNumber <= 9 then
+        maxCardsToPlay = 10
+    else
+        maxCardsToPlay = 15
+    end
 
     -- Play cards based on the round number
-    if game.roundNumber <= 5 then
-        -- Early rounds: Play 1-2 cards, prioritizing resource cards
+    while cardsPlayed < minCardsToPlay or (cardsPlayed < maxCardsToPlay and math.random(2) == 1) do
         for _, card in ipairs(self.hand) do
-            if not hasPlayedCard and card.type == "resource" then
-                print("Dealer playing resource card:", card.name)
-                game:applyDealerResourceEffect(card)
-                hasPlayedCard = true
-            elseif math.random(2) == 1 then  -- 50% chance to play additional cards
-                if card.type == "resource" then
-                    print("Dealer playing resource card:", card.name)
-                    game:applyDealerResourceEffect(card)
-                elseif card.type == "action" then
-                    print("Dealer playing action card:", card.name)
-                    game:applyDealerActionEffect(card)
-                elseif card.type == "gamble" then
-                    print("Dealer playing gamble card:", card.name)
-                    game:applyDealerGambleEffect(card)
-                end
-                hasPlayedCard = true
+            if cardsPlayed >= maxCardsToPlay then
+                break
             end
-        end
-    else
-        -- Later rounds: Play 2-3 cards, prioritizing stronger cards
-        local cardsPlayed = 0
-        for _, card in ipairs(self.hand) do
-            if cardsPlayed < 2 or math.random(2) == 1 then  -- Play at least 2 cards, with a chance for more
+            print("Considering card:", card.name, "Type:", card.type)
+            if not hasPlayedDealerCard and card.type == "dealer" then
+                print("Dealer playing dealer card:", card.name)
+                Game:applyDealerCardEffect(card)
+                hasPlayedDealerCard = true
+                cardsPlayed = cardsPlayed + 1
+            elseif cardsPlayed < maxCardsToPlay then
                 if card.type == "resource" then
                     print("Dealer playing resource card:", card.name)
-                    game:applyDealerResourceEffect(card)
+                    Game:applyDealerResourceEffect(card)
                 elseif card.type == "action" then
                     print("Dealer playing action card:", card.name)
-                    game:applyDealerActionEffect(card)
+                    Game:applyDealerActionEffect(card)
                 elseif card.type == "gamble" then
                     print("Dealer playing gamble card:", card.name)
-                    game:applyDealerGambleEffect(card)
+                    Game:applyDealerGambleEffect(card)
                 end
                 cardsPlayed = cardsPlayed + 1
-                hasPlayedCard = true
             end
         end
     end
 
     -- If no cards were played (unlikely), force the dealer to play one card
-    if not hasPlayedCard then
+    if cardsPlayed == 0 then
         local card = self.hand[1]  -- Play the first card in the hand
         print("Dealer forced to play card:", card.name)
-        if card.type == "resource" then
-            game:applyDealerResourceEffect(card)
+        if card.type == "dealer" then
+            Game:applyDealerCardEffect(card)
         elseif card.type == "action" then
-            game:applyDealerActionEffect(card)
+            Game:applyDealerActionEffect(card)
         elseif card.type == "gamble" then
-            game:applyDealerGambleEffect(card)
+            Game:applyDealerGambleEffect(card)
+        elseif card.type == "resource" then
+            Game:applyDealerResourceEffect(card)
         end
     end
+
+    print("Dealer played", cardsPlayed, "cards.")
+end
+
+function Dealer:getStrongestCards()
+    -- Sort the hand by card strength (assuming higher value means stronger)
+    table.sort(self.hand, function(a, b)
+        return (a.value or 0) > (b.value or 0)
+    end)
+    return self.hand
 end
 
 return Dealer
