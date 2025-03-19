@@ -11,7 +11,7 @@ function Menu:initialize()
 
     self.white = {1, 1, 1, 1}
     self.black = {hexToRGB("#0B0B0B")}
-    self.red = {hexToRGB("#8B0000")}
+    self.red = {hexToRGB("#e11b33")}
     self.gold = {hexToRGB("#CAA52B")}
     self.purple = {hexToRGB("#3B1E5F")}
     self.blue = {hexToRGB("#2e1115")}
@@ -64,11 +64,11 @@ function Menu:draw()
     love.graphics.clear(self.blue)
     if self.currentMenu == "main" then
         love.graphics.setFont(self.titleFont)
-        love.graphics.setColor(self.white)
+        love.graphics.setColor(self.red)
         love.graphics.print(self.titleText, self.titleX, self.titleY)
 
         local logoWidth = self.gameLogo:getWidth()
-        love.graphics.draw(self.gameLogo, (self.screenWidth - logoWidth * 0.15) / 2, self.titleY - 300, 0, 0.15, 0.15)
+        love.graphics.draw(self.gameLogo, (self.screenWidth - logoWidth) / 2, self.titleY - 300, 0, 1, 1)
 
         love.graphics.setFont(self.buttonFont)
         for i, button in ipairs(self.mainMenuButtons) do

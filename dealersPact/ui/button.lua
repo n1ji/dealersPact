@@ -19,9 +19,9 @@ function Button:new(text, x, y, width, height, action, cornerRadius, padding)
 end
 
 function Button:draw()
-    local color = {hexToRGB("#086788")} -- button color
+    local color = {hexToRGB("#413597")} -- button color
     if self.hovered then
-        color = {hexToRGB("#0b132b")}  -- hover color
+        color = {hexToRGB("#1a112e")}  -- hover color
     end
     love.graphics.setColor(color)
     love.graphics.rectangle("fill", self.x, self.y, self.width, self.height, self.cornerRadius)

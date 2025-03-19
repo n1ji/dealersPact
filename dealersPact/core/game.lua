@@ -189,6 +189,9 @@ function Game:update(dt)
         self.shakeOffset.y = 0
     end
 
+    local mouseX, mouseY = love.mouse.getPosition()
+    self.playButton.hovered = self.playButton:isHovered(mouseX, mouseY)
+
     -- Normalize the cursor position to [0, 1] range
     local cursorX = mouseX / love.graphics.getWidth()
     local cursorY = mouseY / love.graphics.getHeight()
