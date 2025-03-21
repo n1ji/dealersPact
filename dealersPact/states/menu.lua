@@ -21,7 +21,7 @@ function Menu:initialize()
     self.titleFont = love.graphics.newFont("assets/fonts/EnchantedLand.otf", 74)
     self.buttonFont = love.graphics.newFont("assets/fonts/EnchantedLand.otf", 50)
 
-    self.music = love.audio.newSource("assets/sounds/mainMenu.mp3", "stream")
+    self.music = love.audio.newSource("assets/sounds/eerie.mp3", "stream")
     self.music:setVolume(Settings.musicVolume)
     self.music:setLooping(true)
     love.audio.play(self.music)

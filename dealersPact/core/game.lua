@@ -38,7 +38,9 @@ Game = {
     dealerCardsVisible = false,
     extraDrawOnWin = false,
     extraDrawCards = 0,
-    gambleCardsPlayed = 0
+    gambleCardsPlayed = 0,
+    silver = "#C0C0C0",
+    dealerCurrentDealerCard = nil
 }
 
 function Game:indexOf(table, element)
@@ -76,6 +78,8 @@ function Game:initialize()
     -- Load the deck and mask textures
     self.deckImage = love.graphics.newImage("assets/cards/back_lq.png")
     self.backMask = love.graphics.newImage("assets/cards/back_mask_lq.png")
+
+    self.dealerBack = love.graphics.newImage("assets/cards/dealer1.png")
     
     -- Load the gold shader
     self.goldShader = love.graphics.newShader("assets/shaders/gold.glsl")
@@ -97,7 +101,10 @@ function Game:initialize()
     self.playButton = Button:new("Play Hand", love.graphics.getWidth() / 2 - 20, self.playerStartY - 70, 100, 50, function() self:completeRound() end, 20, 10)
 
     -- Add replay button
-    self.replayButton = Button:new("Replay", love.graphics.getWidth() / 2 - 50, love.graphics.getHeight() / 2 + 150, 100, 50, function() self:goToMainMenu() end, 20, 10)
+    self.replayButton = Button:new("Replay", love.graphics.getWidth() / 2 - 50, love.graphics.getHeight() / 2 + 150, 120, 50, function()
+        self:resetGame()  -- Reset the game state
+        self:goToMainMenu()  -- Go back to the main menu
+    end, 20, 10)
 
     -- self.wheel = require("core.wheel")
     -- self.wheel:initialize(self.screenWidth, self.screenHeight)
@@ -153,6 +160,8 @@ function Game:initializeWheelOfFate()
 end
 
 function Game:update(dt)
+    local mouseX, mouseY = love.mouse.getPosition()
+
     -- Check for game over condition
     if self.soulEssence <= 0 then
         self.state = "gameOver"
@@ -163,12 +172,13 @@ function Game:update(dt)
 
     -- Update hover state for options menu buttons
     if self.state == "settings" then
-        local mouseX, mouseY = love.mouse.getPosition()
         self.optionsMenu:updateHoverState(mouseX, mouseY)
     end
 
+    self.playButton.hovered = self.playButton:isHovered(mouseX, mouseY)
+    self.replayButton.hovered = self.replayButton:isHovered(mouseX, mouseY)
+
     -- Update hovered card
-    local mouseX, mouseY = love.mouse.getPosition()
     self.hoveredCard = nil
     for i, card in ipairs(self.playerHand) do
         local cardX = self.playerStartX + (i - 1) * (self.cardWidth + self.cardSpacing)
@@ -200,8 +210,6 @@ function Game:update(dt)
         self.shakeOffset.y = 0
     end
 
-    local mouseX, mouseY = love.mouse.getPosition()
-    self.playButton.hovered = self.playButton:isHovered(mouseX, mouseY)
 
     -- Normalize the cursor position to [0, 1] range
     local cursorX = mouseX / love.graphics.getWidth()
@@ -279,32 +287,62 @@ function Game:dealCard()
 end
 
 function Game:draw()
-    love.graphics.clear(hexToRGB("#2e1115"))
-    love.graphics.setColor(1, 1, 1)
+    love.graphics.clear(hexToRGB("#2e1115")) --bg
+    love.graphics.setColor(hexToRGB(self.silver))
     love.graphics.setFont(love.graphics.newFont("assets/fonts/EnchantedLand.otf", 36))
 
     if self.state == "gameOver" then
         -- Display "Game Over" in the center of the screen
         local gameOverText = "Game Over"
         local dealerWinsText = "Dealer Wins!"
-        local reasonText = "Reason: " .. (self.lastDealerCard and self.lastDealerCard.name or "Unknown")
+        local reasonText = "Dealer's Card: " .. (self.lastDealerCard and self.lastDealerCard.name or "Unknown")
         local font = love.graphics.newFont("assets/fonts/EnchantedLand.otf", 72)
         love.graphics.setFont(font)
         local textWidth = font:getWidth(gameOverText)
         local textHeight = font:getHeight(gameOverText)
-        love.graphics.print(gameOverText, (love.graphics.getWidth() - textWidth) / 2, (love.graphics.getHeight() - textHeight) / 2 - 50)
+        love.graphics.print(gameOverText, (love.graphics.getWidth() - textWidth) / 2, (love.graphics.getHeight() - textHeight) / 2 - 150)
         
         font = love.graphics.newFont("assets/fonts/EnchantedLand.otf", 48)
         love.graphics.setFont(font)
         textWidth = font:getWidth(dealerWinsText)
         textHeight = font:getHeight(dealerWinsText)
-        love.graphics.print(dealerWinsText, (love.graphics.getWidth() - textWidth) / 2, (love.graphics.getHeight() - textHeight) / 2 + 20)
+        love.graphics.print(dealerWinsText, (love.graphics.getWidth() - textWidth) / 2, (love.graphics.getHeight() - textHeight) / 2 - 80)
         
         font = love.graphics.newFont("assets/fonts/EnchantedLand.otf", 36)
         love.graphics.setFont(font)
         textWidth = font:getWidth(reasonText)
         textHeight = font:getHeight(reasonText)
-        love.graphics.print(reasonText, (love.graphics.getWidth() - textWidth) / 2, (love.graphics.getHeight() - textHeight) / 2 + 80)
+        love.graphics.print(reasonText, (love.graphics.getWidth() - textWidth) / 2, (love.graphics.getHeight() - textHeight) / 2 )
+
+        -- Display the dealer's "dealer" card description
+        if self.lastDealerCard then
+            -- local cardName = "Dealer's Card: " .. self.lastDealerCard.name
+            local cardEffect = "Effect: " .. self.lastDealerCard.effect
+
+            -- Split the effect text into multiple lines if it's too long
+            local effectLines = {}
+            local currentLine = ""
+            for word in cardEffect:gmatch("%S+") do
+                if font:getWidth(currentLine .. " " .. word) <= 600 then
+                    currentLine = currentLine .. " " .. word
+                else
+                    table.insert(effectLines, currentLine)
+                    currentLine = word
+                end
+            end
+            table.insert(effectLines, currentLine)
+
+            -- Draw the card name
+            -- love.graphics.print(cardName, (love.graphics.getWidth() - font:getWidth(cardName)) / 2, (love.graphics.getHeight() - textHeight) / 2 + 40)
+
+            -- Draw the effect lines
+            for i, line in ipairs(effectLines) do
+                love.graphics.print(line, (love.graphics.getWidth() - font:getWidth(line)) / 2, (love.graphics.getHeight() - textHeight) / 2 + 60 + (i - 1) * 30)
+            end
+        else
+            -- Debug: Print a message if the dealer's "dealer" card is not set
+            print("No dealer's dealer card found for the game over screen.")
+        end
         
         -- Draw replay button
         self.replayButton:draw()
@@ -341,15 +379,15 @@ function Game:draw()
 
     -- draw stats
     local halfScreen = love.graphics.getHeight() / 2
-    love.graphics.setColor(0, 0, 0)
+    love.graphics.setColor(hexToRGB("#222222"))
     love.graphics.rectangle("fill", 10, 0, 300, 960)
-    love.graphics.setColor(hexToRGB("#413597"))
+    love.graphics.setColor(hexToRGB("#1A1B3A"))
     love.graphics.polygon("fill", 10, halfScreen + 30, 310, halfScreen - 30, 310, 960, 10, 960) -- bottom
-    love.graphics.setColor(hexToRGB("#1a112e"))
+    love.graphics.setColor(hexToRGB("#4E2A84"))
     love.graphics.polygon("fill", 10, halfScreen - 30, 310, halfScreen - 90, 310, halfScreen - 30, 10, halfScreen + 30) -- stripe 1
-    love.graphics.setColor(hexToRGB("#413597"))
-    love.graphics.polygon("fill", 10, halfScreen - 90, 310, halfScreen - 150, 310, halfScreen - 90, 10, halfScreen - 30) -- stripe 2
-    love.graphics.setColor(1, 1, 1)
+    love.graphics.setColor(hexToRGB("#CF5C36"))
+    --love.graphics.polygon("fill", 10, halfScreen - 90, 310, halfScreen - 150, 310, halfScreen - 90, 10, halfScreen - 30) -- stripe 2
+    love.graphics.setColor(hexToRGB(self.silver))
     
     love.graphics.print("Soul Essence: " .. self.soulEssence, 30, 525)
     love.graphics.print("Score: " .. self.playerPoints, 30, 565)
@@ -357,6 +395,31 @@ function Game:draw()
 
     love.graphics.print("Dealer Soul Essence: " .. self.dealerSE, 30, 20)
     love.graphics.print("Dealer Score: " .. self.dealerPoints, 30, 60)
+
+    -- Draw the dealer's "dealer" card name and description
+    if self.dealerCurrentDealerCard then
+        love.graphics.setFont(love.graphics.newFont("assets/fonts/EnchantedLand.otf", 24))
+        love.graphics.print("Dealer's Card:", 30, 120)
+        love.graphics.print(self.dealerCurrentDealerCard.name, 30, 160)
+
+        -- Split the effect text into multiple lines if it's too long
+        local effectLines = {}
+        local currentLine = ""
+        for word in self.dealerCurrentDealerCard.effect:gmatch("%S+") do
+            if love.graphics.getFont():getWidth(currentLine .. " " .. word) <= 250 then
+                currentLine = currentLine .. " " .. word
+            else
+                table.insert(effectLines, currentLine)
+                currentLine = word
+            end
+        end
+        table.insert(effectLines, currentLine)
+
+        -- Draw the effect lines
+        for i, line in ipairs(effectLines) do
+            love.graphics.print(line, 30, 200 + (i - 1) * 30)
+        end
+    end
 
     -- draw shader
     love.graphics.setShader(self.goldShader)
@@ -375,7 +438,19 @@ function Game:draw()
     for i, card in ipairs(self.dealer.hand) do
         local cardX = self.dealerStartX + (i - 1) * (self.cardWidth + self.cardSpacing)
         local cardY = self.dealerStartY - 200
-        card:draw(cardX, cardY)
+        if self.dealerCardsVisible or card.type == "dealer" then
+            -- Draw the actual card if dealerCardsVisible is true or if it's a "dealer" card
+            card:draw(cardX, cardY)
+            -- card:drawText(cardX, cardY)
+
+            if card.type == "dealer" then
+            end
+        else
+            -- Draw the placeholder back image if dealerCardsVisible is false
+            love.graphics.setShader(self.goldShader)
+            love.graphics.draw(self.deckImage, cardX, cardY, 0, self.cardScale, self.cardScale)
+            love.graphics.setShader()
+        end
     end
 
     -- Draw the card being dealt (if any)
@@ -432,9 +507,10 @@ function Game:draw()
 end
 
 function Game:handleMousePress(x, y, button)
-    if self.state ~= "playing" then
-        return
-    end
+    print("Mouse clicked at:", x, y)
+    -- if self.state ~= "playing" then
+    --     return
+    -- end
 
     if button == 1 then
         -- Check if the deck was clicked
@@ -465,9 +541,9 @@ function Game:handleMousePress(x, y, button)
             self.playButton.action()  -- Call the button's action
         end
 
-        -- Check if the "Replay" button was clicked
+        -- Check if the replay button was clicked
         if self.replayButton:isHovered(x, y) then
-            self.replayButton.action()  -- Call the button's action
+            self.replayButton.action()  -- Call the replay button's action
         end
     end
 end
@@ -544,7 +620,7 @@ function Game:completeRound()
     end
 
     -- Make dealer cards visible
-    self.dealerCardsVisible = true
+    self.dealerCardsVisible = true  -- Set this flag to true to reveal dealer's cards
 
     -- Reset the player's hand for the next round
     self.playerHand = {}
@@ -573,6 +649,9 @@ end
 function Game:startDealingCards(numCards)
     -- Disable drawing cards manually while dealing
     self.canDrawCards = false
+
+    -- Reset the dealer's "dealer" card for the new round
+    self.dealerCurrentDealerCard = nil
 
     -- Use a timer to deal cards with a delay
     for i = 1, numCards do
@@ -1364,6 +1443,50 @@ end
 
 function Game:goToMainMenu()
     self.state = "menu"
+end
+
+function Game:resetGame()
+    -- Reset game state variables
+    self.state = "menu"
+    self.deck = {}
+    self.dealerDeck = {}
+    self.playerHand = {}
+    self.dealerHand = {}
+    self.soulEssence = 20
+    self.dealerSE = 100
+    self.playerPoints = 0
+    self.dealerPoints = 0
+    self.roundNumber = 1
+    self.canDrawCards = true
+    self.dealerCardsVisible = false
+    self.extraDrawOnWin = false
+    self.extraDrawCards = 0
+    self.gambleCardsPlayed = 0
+
+    -- Reinitialize the decks
+    self:initializeDecks()
+
+    -- Reset the dealer's hand
+    self.dealer:resetHand(self)
+
+    -- Reset the timer
+    -- self.timer:clearTimers()
+
+    -- Reset any other necessary variables
+    self.lastDealerCard = nil
+    self.doublePointsActive = false
+    self.doubleTroubleCount = 0
+    self.dealerDisabled = false
+    self.playerDisabled = false
+    self.dealerSEDisabled = false
+    self.playerSEDisabled = false
+    self.reuseActionCard = false
+    self.returnToHand = false
+    self.extraCardPlay = false
+    self.playedGambleCard = false
+
+    -- Debug: Print a message to confirm the game has been reset
+    print("Game reset! Ready to start a new game.")
 end
 
 function Game:start()
